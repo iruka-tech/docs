@@ -7,3 +7,4 @@ docusaurus.config.ts
 sidebars.ts
 docs/intro.md
 .DS_Store
+.vercel

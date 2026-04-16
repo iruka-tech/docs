@@ -1,56 +1,50 @@
-# Megabat Documentation
+# Megabat for Integrators
 
-This site is the canonical documentation home for Megabat. Content is organized around canonical owners: when a topic appears in multiple places, one page owns the details and the others should link to it.
+Megabat is a monitoring backend for onchain state and event-driven alerts.
 
-## Start Here
+If you are building wallets, dashboards, automation, portfolio tooling, or internal ops workflows, Megabat helps you define **signals** that watch blockchain activity and notify your systems when conditions are met.
 
-| Doc | Owns | Use it for |
-| --- | --- | --- |
-| [GETTING_STARTED.md](get-started/getting-started.md) | Local setup | Boot the stack locally, log in, mint an API key, and verify the app |
-| [DEPLOYMENT.md](get-started/deployment.md) | Production setup | Docker and hosted deployment guidance |
-| [PUBLIC_SIGNAL_MODEL.md](product/public-signal-model.md) | Public signal capabilities | First-principles explanation of what the signal API can and cannot express today |
-| [DSL.md](product/dsl.md) | Signal definition language | Scope, windows, reference families, condition inputs, metrics, and canonical examples |
-| [API.md](reference/api.md) | HTTP surface | Endpoints, request shapes, webhook payloads, and simulation routes |
+## What Megabat does
 
-## Security And Integration
+Megabat lets you:
 
-| Doc | Owns | Use it for |
-| --- | --- | --- |
-| [AUTH.md](reference/auth.md) | Auth model | SIWE, sessions, API keys, register gate, webhook signature model |
-| [TELEGRAM_DELIVERY.md](integrations/telegram-delivery.md) | Cross-service Telegram contract | `app_user_id`, webhook target, token-link flow, internal status routes |
-| [WEBAPP_INTEGRATION.md](integrations/webapp-integration.md) | Backend integration contract | web app as megabat console, session flow, thin-BFF decisions |
+- watch **current state** such as balances, vault positions, or protocol-specific fields
+- detect **changes over time** such as a position dropping by 10% over 1 hour
+- count or aggregate **decoded events** such as transfers, deposits, or swaps
+- combine conditions across **multiple chains**, **multiple addresses**, and **time windows**
+- deliver alerts to a **custom webhook** or to **managed Telegram delivery**
 
-## Internals
+## What to read first
 
-| Doc | Owns | Use it for |
-| --- | --- | --- |
-| [ARCHITECTURE.md](internals/architecture.md) | System design | Compiler/evaluator flow, indexing boundary vs RPC, and service responsibilities |
-| [SOURCES.md](internals/sources.md) | Source-family model | Current providers, capability gating, and the future extension path for new sources |
-| [INTERNAL_SIGNAL_ENGINE.md](internals/internal-signal-engine.md) | Signal engine internals | Refs, bindings, plans, AST compilation, and runtime evaluation flow |
-| [DESIGN_DECISIONS.md](internals/design-decisions.md) | ADR-style reasoning | Why the current design looks the way it does |
-| [ISSUE_NO_TIME_TRAVEL.md](internals/no-time-travel.md) | Specific data-source constraint | Why state reads use RPC while events use Envio |
+If you are new, read in this order:
 
-## Planning And Status
+1. **Getting Started** — how to run Megabat locally, create credentials, and make your first API call
+2. **What You Can Build** — the product model, supported condition types, and where Megabat fits well
+3. **Writing Signals** — the request shape and concrete examples you can send today
+4. **Auth** — API keys, SIWE sessions, and protected routes
+5. **API Reference** — endpoints, payloads, and response behavior
 
-| Doc | Owns | Use it for |
-| --- | --- | --- |
-| [ROADMAP.md](planning/roadmap.md) | Product direction | Near-term and later priorities |
-| [../TODO.md](planning/implementation-status.md) | Implementation status | Concrete work items in the repo |
+## The product model in one sentence
 
-## Package-Specific
+A signal is a saved rule made of:
 
-| Doc | Owns | Use it for |
-| --- | --- | --- |
-| [../packages/delivery/README.md](packages/delivery.md) | Delivery package details | Package-local commands and delivery-specific runtime notes |
+- a **scope** — which chains, addresses, and optional protocol filters to watch
+- one or more **conditions** — thresholds, changes, grouped address checks, aggregates, or raw-event queries
+- a **window** — the time range used for evaluation
+- a **delivery target** — a webhook URL or managed Telegram delivery
 
-## Ownership Rules
+## Where Megabat is strongest today
 
-- Local setup belongs in [GETTING_STARTED.md](get-started/getting-started.md).
-- Production setup belongs in [DEPLOYMENT.md](get-started/deployment.md).
-- Public product capabilities belong in [PUBLIC_SIGNAL_MODEL.md](product/public-signal-model.md).
-- DSL shape, reference families, and examples belong in [DSL.md](product/dsl.md).
-- Source-family capability rules and extension design belong in [SOURCES.md](internals/sources.md).
-- Endpoint details belong in [API.md](reference/api.md).
-- Internal compiler/planner/binder/evaluator explanations belong in [INTERNAL_SIGNAL_ENGINE.md](internals/internal-signal-engine.md).
-- Auth and delivery docs describe contracts and routing, not setup steps.
+Megabat is especially useful when you want to monitor:
 
+- protocol positions and market state
+- token and vault activity
+- decoded event activity over a rolling window
+- multi-address or cross-chain alerting logic
+- product workflows that need a clean alerting backend behind a web app
+
+## Where to go next
+
+- Read **Getting Started** if you want to run it now
+- Read **What You Can Build** if you want to decide whether Megabat fits your use case
+- Read **Writing Signals** if you already know you want to integrate

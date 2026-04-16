@@ -1,575 +1,222 @@
 # API Reference
 
-This document owns the HTTP surface. Signal syntax belongs in [DSL.md](../product/dsl.md). Auth rules belong in [AUTH.md](auth.md).
+This page documents the public HTTP surface for integrators.
 
-## Base URLs
+Base URL examples in this page use local development defaults:
 
-- main API root: `http://localhost:3000`
-- main API namespace: `http://localhost:3000/api/v1`
-- delivery service: `http://localhost:3100`
+- API root: `http://localhost:3000`
+- API namespace: `http://localhost:3000/api/v1`
 
-## Auth Summary
-
-- `GET /health` is public
-- `GET /chains` is public
-- `GET /ready` is public
-- `POST /api/v1/auth/register` is public unless `REGISTER_ADMIN_KEY` is configured
-- `POST /api/v1/auth/siwe/nonce` is public
-- `POST /api/v1/auth/siwe/verify` is public
-- all other `/api/v1/*` routes require either `X-API-Key` or a megabat session
-- `POST /webhook/deliver` requires `X-Megabat-Signature`
-- delivery internal status/link routes require `X-Admin-Key`
-
-See [AUTH.md](auth.md) for the full auth model.
-
-## Endpoint Inventory
-
-### Main API
+## Public endpoints
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/health` | Health check |
-| GET | `/chains` | Supported-chain and archive RPC configuration report |
-| GET | `/ready` | Readiness check against DB, Redis, and configured providers |
-| POST | `/api/v1/auth/register` | Create megabat owner + API key |
-| POST | `/api/v1/auth/siwe/nonce` | Issue SIWE nonce |
-| POST | `/api/v1/auth/siwe/verify` | Verify SIWE message and create session |
-| GET | `/api/v1/auth/me` | Return authenticated profile |
+| GET | `/health` | Fast liveness check |
+| GET | `/chains` | Supported chain report |
+| GET | `/ready` | Dependency readiness check |
+| POST | `/api/v1/auth/register` | Create a user and API key |
+| POST | `/api/v1/auth/siwe/nonce` | Issue a SIWE nonce |
+| POST | `/api/v1/auth/siwe/verify` | Verify a SIWE message and create a session |
+| GET | `/api/v1/catalog` | Return the backend-supported signal template catalog |
+
+## Protected endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/auth/me` | Return the authenticated profile |
 | POST | `/api/v1/auth/logout` | Revoke the current session |
-| GET | `/api/v1/me/integrations/telegram` | Return Telegram link status for the current user |
+| GET | `/api/v1/me/integrations/telegram` | Return Telegram link status |
 | POST | `/api/v1/me/integrations/telegram/link` | Link a Telegram token to the current user |
-| POST | `/api/v1/signals` | Create signal |
-| GET | `/api/v1/signals` | List user signals |
+| POST | `/api/v1/signals` | Create a signal |
+| GET | `/api/v1/signals` | List signals |
 | GET | `/api/v1/signals/:id` | Get one signal |
-| PATCH | `/api/v1/signals/:id` | Update signal |
-| PATCH | `/api/v1/signals/:id/toggle` | Toggle `is_active` |
-| DELETE | `/api/v1/signals/:id` | Delete signal |
+| PATCH | `/api/v1/signals/:id` | Update a signal |
+| PATCH | `/api/v1/signals/:id/toggle` | Toggle active status |
+| DELETE | `/api/v1/signals/:id` | Delete a signal |
 | GET | `/api/v1/signals/:id/history` | Evaluation and notification history |
-| POST | `/api/v1/simulate/:id/simulate` | Simulate across a time range |
-| POST | `/api/v1/simulate/:id/first-trigger` | Find first trigger in a range |
+| POST | `/api/v1/simulate/:id/simulate` | Simulate a signal over a time range |
+| POST | `/api/v1/simulate/:id/first-trigger` | Find the first matching point in a range |
 
-## Health
+## Health endpoints
 
-```http
-GET /health
-```
+### `GET /health`
 
-Response:
+Use `/health` as the fast platform-level liveness check.
+
+It reports:
+
+- process status
+- configured source-family capability status
+- chain configuration loaded at startup
+
+### `GET /chains`
+
+Use `/chains` to inspect:
+
+- the explicit chain allowlist Megabat loaded
+- the required `RPC_URL_<chainId>` configuration names
+
+### `GET /ready`
+
+Use `/ready` when you want a stricter readiness signal.
+
+It checks:
+
+- PostgreSQL
+- Redis
+- configured archive RPC endpoints
+- optional indexed/raw providers when enabled
+
+## Catalog endpoint
+
+### `GET /api/v1/catalog`
+
+This returns the backend-supported template catalog for signal builders.
+
+It is useful when you want your UI to present backend-native templates instead of hardcoding them in the frontend.
+
+## Create a signal
+
+### `POST /api/v1/signals`
+
+This endpoint accepts the signal payload described in **Writing Signals**.
+
+A valid request must include:
+
+- `name`
+- `definition`
+- either `webhook_url` or `delivery`
+
+Example:
 
 ```json
 {
-  "status": "ok",
-  "timestamp": "2026-03-26T00:00:00.000Z",
-  "capabilities": {
-    "state": {
-      "provider": "rpc",
-      "enabled": true,
-      "requiredEnv": [],
-      "message": "state source family is enabled"
+  "name": "High transfer count",
+  "definition": {
+    "scope": {
+      "chains": [1],
+      "protocol": "all"
     },
-    "indexed": {
-      "provider": "envio",
-      "enabled": false,
-      "tier": "advanced",
-      "label": "advanced indexed semantic source family",
-      "requiredEnv": ["ENVIO_ENDPOINT"],
-      "reason": "ENVIO_ENDPOINT is not configured",
-      "message": "advanced indexed semantic source family is disabled because ENVIO_ENDPOINT is not configured. Configure ENVIO_ENDPOINT to enable it."
-    },
-    "raw": {
-      "provider": "hypersync",
-      "enabled": false,
-      "tier": "default",
-      "label": "raw event source family",
-      "requiredEnv": ["ENVIO_API_TOKEN"],
-      "reason": "ENVIO_API_TOKEN is not configured",
-      "message": "raw event source family is disabled because ENVIO_API_TOKEN is not configured. Configure ENVIO_API_TOKEN to enable it."
-    }
-  },
-  "chains": {
-    "configured": true,
-    "mode": "explicit",
-    "supportedChains": [
+    "window": { "duration": "1h" },
+    "conditions": [
       {
-        "chainId": 8453,
-        "name": "Base",
-        "rpcEnvVar": "RPC_URL_8453",
-        "rpcUrlCount": 1,
-        "archiveRequired": true
+        "type": "raw-events",
+        "aggregation": "count",
+        "operator": ">",
+        "value": 100,
+        "chain_id": 1,
+        "event": {
+          "kind": "erc20_transfer",
+          "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+        }
       }
-    ],
-    "issues": []
-  }
-}
-```
-
-`GET /health` is a fast liveness endpoint. It reports configured source capabilities plus the supported-chain archive RPC configuration loaded at startup, not live upstream reachability.
-
-```http
-GET /chains
-```
-
-`GET /chains` returns the explicit runtime chain allowlist and the required `RPC_URL_<chainId>` env vars megabat loaded at startup.
-
-```http
-GET /ready
-```
-
-`GET /ready` performs a cached readiness probe against PostgreSQL, Redis, every configured archive RPC chain, and any configured indexed/raw providers. It returns `200` when all enabled dependencies are reachable and `503` when the process is up but one of those dependencies is not ready.
-
-For deployment platform healthchecks, prefer `GET /health`.
-`/health` confirms the API process is up, while `/ready` is intentionally stricter and can remain degraded while optional/required dependencies are still becoming ready.
-
-### Catalog
-
-`GET /api/v1/catalog` returns the current backend-supported signal template catalog, split into:
-
-- `basic.raw_events` — default primitive-first templates
-- `advanced.raw_events` — advanced escape hatches such as `contract_event`
-
-This endpoint is intended to support builder/template UX without hardcoding template lists in the frontend.
-
-### Delivery Service
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/health` | Health check |
-| GET | `/link?token=...&app_user_id=...` | Hosted Telegram link page |
-| POST | `/link/connect` | Link `app_user_id` to a Telegram chat |
-| POST | `/webhook/deliver` | Receive megabat webhook and deliver to Telegram |
-| GET | `/admin/stats` | Delivery stats |
-| GET | `/internal/integrations/telegram/:appUserId` | Internal Telegram status lookup |
-| POST | `/internal/integrations/telegram/:appUserId/link` | Internal token-to-user Telegram link |
-
-## Auth Flows
-
-### Register For API-Key Access
-
-```http
-POST /api/v1/auth/register
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "name": "Acme Alerts",
-  "key_name": "prod-key"
-}
-```
-
-Response:
-
-```json
-{
-  "user_id": "550e8400-e29b-41d4-a716-446655440000",
-  "api_key_id": "2e4d1e12-3a0d-4b0c-9b54-7a1f4d8c3ed1",
-  "api_key": "***"
-}
-```
-
-### Browser Login With SIWE
-
-Issue a nonce:
-
-```http
-POST /api/v1/auth/siwe/nonce
-```
-
-Response:
-
-```json
-{
-  "provider": "wallet",
-  "nonce": "abc123...",
-  "expires_at": "2026-03-17T08:10:00.000Z",
-  "domain": "localhost:3000",
-  "uri": "http://localhost:3000"
-}
-```
-
-Verify the signed message:
-
-```http
-POST /api/v1/auth/siwe/verify
-Content-Type: application/json
-
-{
-  "message": "localhost:3000 wants you to sign in with your Ethereum account: ...",
-  "signature": "0x...",
-  "name": "Local Dev"
-}
-```
-
-Response:
-
-```json
-{
-  "user_id": "550e8400-e29b-41d4-a716-446655440000",
-  "session_id": "2e4d1e12-3a0d-4b0c-9b54-7a1f4d8c3ed1",
-  "session_token": "megabat_session_...",
-  "expires_at": "2026-04-16T08:00:00.000Z",
-  "created": true,
-  "auth_method": "session",
-  "identity": {
-    "provider": "wallet",
-    "provider_subject": "0xabc..."
-  }
-}
-```
-
-Successful verification also sets an `HttpOnly` session cookie.
-
-### Authenticated Profile
-
-```http
-GET /api/v1/auth/me
-Cookie: megabat_session=megabat_session_...
-```
-
-or
-
-```http
-GET /api/v1/auth/me
-X-API-Key: megabat_...
-```
-
-Response:
-
-```json
-{
-  "user_id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "Local Dev",
-  "created_at": "2026-03-17T08:00:00.000Z",
-  "auth_method": "session",
-  "api_key_id": null,
-  "session_id": "2e4d1e12-3a0d-4b0c-9b54-7a1f4d8c3ed1",
-  "identities": [
-    {
-      "id": "8f2c...",
-      "provider": "wallet",
-      "provider_subject": "0xabc...",
-      "created_at": "2026-03-17T08:00:00.000Z",
-      "metadata": {
-        "address": "0xabc...",
-        "chain_id": 1
-      }
-    }
-  ]
-}
-```
-
-### Logout
-
-```http
-POST /api/v1/auth/logout
-Cookie: megabat_session=megabat_session_...
-```
-
-Response:
-
-```json
-{
-  "success": true
-}
-```
-
-## Telegram Integration Endpoints
-
-Status:
-
-```http
-GET /api/v1/me/integrations/telegram
-Cookie: megabat_session=megabat_session_...
-```
-
-Response when linked:
-
-```json
-{
-  "provider": "telegram",
-  "linked": true,
-  "app_user_id": "550e8400-e29b-41d4-a716-446655440000",
-  "telegram_username": "megabat_user",
-  "linked_at": "2026-03-17T08:00:00.000Z"
-}
-```
-
-Response when not linked:
-
-```json
-{
-  "provider": "telegram",
-  "linked": false,
-  "app_user_id": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
-
-Link a Telegram token the user received from the bot:
-
-```http
-POST /api/v1/me/integrations/telegram/link
-Content-Type: application/json
-Cookie: megabat_session=megabat_session_...
-
-{
-  "token": "telegr...oken"
-}
-```
-
-## Create Signal
-
-```http
-POST /api/v1/signals
-Content-Type: application/json
-X-API-Key: megabat_...
-```
-
-Protected product routes also accept a megabat session cookie or bearer token.
-
-Request body:
-
-```json
-{
-  "name": "High Utilization",
-  "description": "Optional",
-  "definition": { "...": "see DSL.md" },
-  "webhook_url": "https://your-webhook.example/alert",
+    ]
+  },
+  "webhook_url": "https://example.com/webhook",
   "cooldown_minutes": 5,
   "repeat_policy": { "mode": "cooldown" }
 }
 ```
 
-Supported repeat policies:
+Response:
 
-- `{"mode":"cooldown"}`: legacy behavior, repeat while the condition stays true based on `cooldown_minutes`
-- `{"mode":"post_first_alert_snooze","snooze_minutes":1440}`: alert immediately on a new incident after resolution, then suppress reminders for the snooze window
-- `{"mode":"until_resolved"}`: alert once per incident, then stay quiet until the condition evaluates false again
+- returns the created signal
+- echoes the public `definition`
+- includes normalized `repeat_policy`
+- includes inferred `delivery` when relevant
 
-For megabat-managed Telegram delivery, the browser can send:
+## List and fetch signals
 
-```json
-{
-  "name": "Telegram Alert",
-  "definition": { "...": "see DSL.md" },
-  "delivery": { "provider": "telegram" },
-  "cooldown_minutes": 5,
-  "repeat_policy": { "mode": "post_first_alert_snooze", "snooze_minutes": 1440 }
-}
-```
+### `GET /api/v1/signals`
 
-In that mode, megabat resolves the actual delivery webhook target server-side using `DELIVERY_BASE_URL`. The client should not submit internal Docker or private-network hostnames.
-Telegram alerts currently include inline `Why`, `Snooze 1h`, and `Snooze 1d` actions managed by the delivery service.
+Query parameter:
 
-Use [DSL.md](../product/dsl.md) for:
+- `active=true` — return only active signals
 
-- reference families: state, indexed, raw
-- condition input rules
-- canonical signal examples
+### `GET /api/v1/signals/:id`
 
-If a request uses a disabled source family, megabat returns `409 Conflict` instead of accepting the signal and failing later.
-That applies to create, update, toggle-on, and simulation routes.
+Returns one signal for the authenticated owner.
 
-## Signal CRUD
+## Update, toggle, and delete
 
-List:
+### `PATCH /api/v1/signals/:id`
 
-```http
-GET /api/v1/signals?active=true
-X-API-Key: megabat_...
-```
+Supports partial updates for fields such as:
 
-Get one:
+- `name`
+- `description`
+- `definition`
+- `webhook_url`
+- `delivery`
+- `cooldown_minutes`
+- `repeat_policy`
+- `is_active`
 
-```http
-GET /api/v1/signals/:id
-X-API-Key: megabat_...
-```
+### `PATCH /api/v1/signals/:id/toggle`
 
-Partial update:
+Use this for a simple active/inactive toggle.
 
-```http
-PATCH /api/v1/signals/:id
-Content-Type: application/json
-X-API-Key: megabat_...
+### `DELETE /api/v1/signals/:id`
 
-{
-  "cooldown_minutes": 10,
-  "repeat_policy": { "mode": "until_resolved" },
-  "is_active": false
-}
-```
+Deletes the signal for the authenticated owner.
 
-If you set `is_active: true` on a signal whose required source family is disabled, the API returns `409`.
+## Signal history
 
-Toggle:
+### `GET /api/v1/signals/:id/history`
 
-```http
-PATCH /api/v1/signals/:id/toggle
-X-API-Key: megabat_...
-```
+Query parameters:
 
-Delete:
+- `limit` — max 500, default 100
+- `include_notifications=false` — skip notification records
 
-```http
-DELETE /api/v1/signals/:id
-X-API-Key: megabat_...
-```
+The response includes:
 
-## History
+- evaluation history
+- notification history
+- `condition_results`
+- `conditions_met`
 
-```http
-GET /api/v1/signals/:id/history?limit=100&include_notifications=true
-X-API-Key: megabat_...
-```
-
-Response shape:
-
-```json
-{
-  "signal_id": "550e8400-e29b-41d4-a716-446655440000",
-  "evaluations": [
-    {
-      "metadata": {
-        "logic": "AND",
-        "scope": { "chains": [1], "markets": ["0x..."], "addresses": ["0x..."] },
-        "repeat_policy": { "mode": "post_first_alert_snooze", "snooze_minutes": 1440 },
-        "condition_results": [
-          {
-            "conditionIndex": 0,
-            "conditionType": "simple",
-            "triggered": true,
-            "summary": "100 > 50",
-            "window": "1h",
-            "operator": "gt",
-            "leftValue": 100,
-            "rightValue": 50
-          }
-        ],
-        "conditions_met": [
-          {
-            "conditionIndex": 0,
-            "conditionType": "simple",
-            "triggered": true,
-            "summary": "100 > 50"
-          }
-        ]
-      },
-      "condition_results": [
-        {
-          "conditionIndex": 0,
-          "conditionType": "simple",
-          "triggered": true,
-          "summary": "100 > 50",
-          "window": "1h",
-          "operator": "gt",
-          "leftValue": 100,
-          "rightValue": 50
-        }
-      ],
-      "conditions_met": [
-        {
-          "conditionIndex": 0,
-          "conditionType": "simple",
-          "triggered": true,
-          "summary": "100 > 50"
-        }
-      ]
-    }
-  ],
-  "notifications": [
-    {
-      "payload": {
-        "conditions_met": [
-          {
-            "conditionIndex": 0,
-            "conditionType": "group",
-            "triggered": true,
-            "summary": "3 of 5 addresses matched (required 3)",
-            "matchedAddresses": ["0x1", "0x2", "0x3"]
-          }
-        ]
-      },
-      "conditions_met": [
-        {
-          "conditionIndex": 0,
-          "conditionType": "group",
-          "triggered": true,
-          "summary": "3 of 5 addresses matched (required 3)",
-          "matchedAddresses": ["0x1", "0x2", "0x3"]
-        }
-      ]
-    }
-  ],
-  "count": {
-    "evaluations": 1,
-    "notifications": 1
-  }
-}
-```
-
-History response additions:
-
-- top-level signal CRUD responses now include `repeat_policy`
-- evaluation history normalizes `condition_results`, `conditions_met`, `logic`, and `scope`
-- notification history normalizes `conditions_met` from the stored payload
+This is useful for explainability and debugging integrations.
 
 ## Simulation
 
-Simulate across a time range:
+### `POST /api/v1/simulate/:id/simulate`
 
-```http
-POST /api/v1/simulate/:id/simulate
-Content-Type: application/json
-X-API-Key: megabat_...
+Use this to simulate a saved signal over a time range.
 
-{
-  "start_time": "2026-01-01T00:00:00Z",
-  "end_time": "2026-02-01T00:00:00Z",
-  "interval_ms": 3600000,
-  "compact": true
-}
-```
+### `POST /api/v1/simulate/:id/first-trigger`
 
-Simulation also returns `409` if the stored signal depends on a disabled source family.
+Use this to find the first point where the signal would have matched.
 
-Find first trigger:
+These endpoints are useful for:
 
-```http
-POST /api/v1/simulate/:id/first-trigger
-Content-Type: application/json
-X-API-Key: megabat_...
+- backtesting
+- signal tuning
+- verifying whether a rule is too noisy before enabling it
 
-{
-  "start_time": "2026-01-01T00:00:00Z",
-  "end_time": "2026-02-01T00:00:00Z",
-  "precision_ms": 60000
-}
-```
+## Response and error behavior
 
-## Webhook Payload
+Common response patterns:
 
-Outgoing megabat webhooks use this payload shape:
+- `400` for schema or validation failures
+- `401` for missing or invalid auth
+- `404` when a signal is not found for the authenticated owner
+- `409` when a signal requires source capabilities that are not enabled
+- `500` for unexpected server errors
+
+## Webhook delivery note
+
+When you use a custom `webhook_url`, Megabat will send alert notifications to your endpoint.
+
+When you use managed Telegram delivery, create the signal with:
 
 ```json
-{
-  "signal_id": "550e8400-e29b-41d4-a716-446655440000",
-  "signal_name": "My Alert",
-  "triggered_at": "2026-02-02T15:30:00Z",
-  "scope": {
-    "chains": [1],
-    "markets": ["0x..."],
-    "addresses": ["0x..."]
-  },
-  "conditions_met": [],
-  "context": {
-    "app_user_id": "550e8400-e29b-41d4-a716-446655440000",
-    "address": "0x...",
-    "market_id": "0x...",
-    "chain_id": 1
-  }
-}
+{ "delivery": { "provider": "telegram" } }
 ```
 
-For direct Telegram delivery, `context.app_user_id` should match the Telegram link mapping. See [TELEGRAM_DELIVERY.md](../integrations/telegram-delivery.md).
+Megabat will resolve the actual delivery target internally.
+
+## What to read next
+
+- Read **Writing Signals** for payload examples
+- Read **Telegram Delivery** if you want managed operator notifications

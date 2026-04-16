@@ -1,161 +1,170 @@
-# Auth Guide
+# Auth
 
-This document owns the megabat auth model. Endpoint payloads live in [API.md](api.md).
+Megabat supports two authentication modes:
 
-## Control-Plane Model
+- **API keys** for server-to-server integrations
+- **SIWE-backed browser sessions** for interactive web applications
 
-megabat has one canonical owner record today: `users.id`.
+Choose the one that matches your client.
 
-Everything that matters for product ownership already keys off that ID:
+## API keys
 
-- `signals.user_id`
-- `api_keys.user_id`
-- browser sessions in `user_sessions.user_id`
-- login identities in `auth_identities.user_id`
-- Telegram routing via `context.app_user_id = users.id`
+Use API keys for:
 
-That means:
+- backend automation
+- scheduled jobs
+- internal services
+- any integration that should not depend on browser cookies
 
-- humans authenticate with browser sessions
-- programs authenticate with API keys
-- both resolve to the same megabat user/account ID
-
-The signal worker does not care how the request authenticated. It only cares about the resolved owner ID.
-
-## Main API Auth
-
-Public routes:
-
-- `GET /health`
-- `POST /api/v1/auth/register` unless the register gate is enabled
-- `POST /api/v1/auth/siwe/nonce`
-- `POST /api/v1/auth/siwe/verify`
-
-Protected routes:
-
-- all other `/api/v1/*` endpoints, including `GET /api/v1/auth/me` and `POST /api/v1/auth/logout`
-
-Protected requests may authenticate in either of these ways:
+### Create an API key
 
 ```http
-X-API-Key: megabat_...
+POST /api/v1/auth/register
+Content-Type: application/json
 ```
 
-or
+Request body:
 
-```http
-Cookie: megabat_session=megabat_session_...
+```json
+{
+  "name": "Acme Alerts",
+  "key_name": "prod"
+}
 ```
 
-or
-
-```http
-Authorization: Bearer megaba..._...
-```
-
-Rules:
-
-- API keys are for programmatic access
-- sessions are for browser or console access
-- both forms resolve to the same `req.auth.userId`
-- megabat routes do not branch on “web user” vs “API user”; they branch only on the resolved owner ID
-
-## Browser Auth
-
-Current native browser login uses SIWE:
-
-- `POST /api/v1/auth/siwe/nonce` issues a short-lived nonce
-- `POST /api/v1/auth/siwe/verify` verifies the signed SIWE message
-- on success megabat creates or reuses a `users` row, links the wallet in `auth_identities`, and creates a `user_sessions` row
-
-Session cookies are:
-
-- `HttpOnly`
-- `SameSite=Lax`
-- `Secure` in production
-
-The session token is also returned in the verify response so non-cookie clients can use `Authorization: Bearer`.
-
-## Provider Identities
-
-`auth_identities` is provider-agnostic.
-
-Current provider:
-
-- `wallet`
-
-Planned future providers:
-
-- email
-- google
-- additional wallet families if needed
-
-The important invariant is:
-
-- multiple login methods can map to the same megabat `users.id`
-- resource ownership does not change when login providers change
-
-## API Keys
-
-megabat keeps DB-backed API keys for machine access.
-
-Today:
-
-- `POST /api/v1/auth/register` creates a new megabat owner plus one API key
-- the route can be gated with `REGISTER_ADMIN_KEY`
-
-Operational guidance:
-
-- treat API keys as backend credentials
-- do not expose them to browser clients
-- rotate by minting a new key and deactivating the old one when key-management endpoints are added
-
-## Register Gate
-
-You can temporarily gate anonymous API-key registration by setting:
-
-- `REGISTER_ADMIN_KEY`
-
-If it is set, `POST /api/v1/auth/register` also requires:
+If `REGISTER_ADMIN_KEY` is enabled on the backend, send:
 
 ```http
 X-Admin-Key: <register_admin_key>
 ```
 
-If it is unset, register remains open.
+Response shape:
 
-## Delivery Auth
-
-Delivery webhook verification uses:
-
-```http
-X-Megabat-Signature: t=<timestamp>,v1=<hex_hmac>
+```json
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "api_key_id": "2e4d1e12-3a0d-4b0c-9b54-7a1f4d8c3ed1",
+  "api_key": "megabat_..."
+}
 ```
 
-Signature model:
+Use the key on protected routes as:
 
-- signed payload: `HMAC_SHA256(WEBHOOK_SECRET, "<timestamp>.<raw_body>")`
-- megabat signs outgoing webhooks when `WEBHOOK_SECRET` is set
-- delivery verifies the same signature using its own `WEBHOOK_SECRET`
+```http
+X-API-Key: megabat_...
+```
 
-That secret must match on both services.
+## SIWE browser sessions
 
-## Delivery Internal Endpoints
+Use SIWE if your product has an interactive wallet-connected frontend.
 
-megabat can query delivery for Telegram status and token linking through internal admin routes.
+### Step 1: request a nonce
 
-By default:
+```http
+POST /api/v1/auth/siwe/nonce
+```
 
-- megabat uses `DELIVERY_BASE_URL`
-- megabat sends `X-Admin-Key` using `DELIVERY_ADMIN_KEY`
-- if `DELIVERY_ADMIN_KEY` is unset, megabat falls back to its own `WEBHOOK_SECRET`
-- delivery accepts `ADMIN_KEY` if set, otherwise it falls back to `WEBHOOK_SECRET`
+Example response:
 
-This keeps the web app thin while preserving the delivery-service boundary.
+```json
+{
+  "provider": "wallet",
+  "nonce": "abc123...",
+  "expires_at": "2026-03-17T08:10:00.000Z",
+  "domain": "localhost:3000",
+  "uri": "http://localhost:3000"
+}
+```
 
-## Related Docs
+### Step 2: verify the signed message
 
-- Endpoint reference: [API.md](api.md)
-- Browser and backend integration contract: [WEBAPP_INTEGRATION.md](../integrations/webapp-integration.md)
-- Telegram flow and app user mapping: [TELEGRAM_DELIVERY.md](../integrations/telegram-delivery.md)
-- Local and production setup: [GETTING_STARTED.md](../get-started/getting-started.md), [DEPLOYMENT.md](../get-started/deployment.md)
+```http
+POST /api/v1/auth/siwe/verify
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "message": "localhost:3000 wants you to sign in with your Ethereum account: ...",
+  "signature": "0x...",
+  "name": "Local Dev"
+}
+```
+
+Megabat responds with both a session cookie and a session token.
+
+Example response:
+
+```json
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "session_id": "2e4d1e12-3a0d-4b0c-9b54-7a1f4d8c3ed1",
+  "session_token": "megabat_session_...",
+  "expires_at": "2026-04-16T08:00:00.000Z",
+  "created": true,
+  "auth_method": "session",
+  "identity": {
+    "provider": "wallet",
+    "provider_subject": "0xabc..."
+  }
+}
+```
+
+You can then authenticate with either:
+
+- the `HttpOnly` cookie
+- `Authorization: Bearer megabat_session_...`
+
+## Fetch the current profile
+
+```http
+GET /api/v1/auth/me
+```
+
+This works with:
+
+- session cookie
+- bearer session token
+- API key
+
+## Log out
+
+```http
+POST /api/v1/auth/logout
+```
+
+This revokes the current session.
+
+## Which routes are public?
+
+These routes are public:
+
+- `GET /health`
+- `GET /chains`
+- `GET /ready`
+- `POST /api/v1/auth/register` (unless gated by `REGISTER_ADMIN_KEY`)
+- `POST /api/v1/auth/siwe/nonce`
+- `POST /api/v1/auth/siwe/verify`
+
+Most other `/api/v1/*` routes require auth.
+
+## Which auth mode should I use?
+
+Use **API keys** if:
+
+- your caller is a backend service
+- you want simple header-based auth
+- you are integrating alerts into your own systems
+
+Use **SIWE sessions** if:
+
+- you have a wallet-connected frontend
+- users should manage their own signals interactively
+- you want the web app to act as the main console on top of Megabat
+
+## What to read next
+
+- Read **API Reference** for protected endpoint behavior
+- Read **Webapp Integration** if you are building a frontend on top of Megabat

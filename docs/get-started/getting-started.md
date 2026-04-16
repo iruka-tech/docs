@@ -1,6 +1,6 @@
 # Getting Started
 
-This is the canonical local setup guide. Other docs should point here instead of repeating setup steps.
+This guide is for engineers who want to evaluate Megabat locally and make a real API call against the backend.
 
 ## Prerequisites
 
@@ -8,130 +8,75 @@ This is the canonical local setup guide. Other docs should point here instead of
 - pnpm via Corepack
 - Docker Desktop
 
+## Install dependencies
+
+From the backend repository:
+
 ```bash
-corepack enable
 corepack prepare pnpm@latest --activate
 pnpm install
 ```
 
-## Env Files
-
-Create both env files once:
+## Create env files
 
 ```bash
 cp .env.example .env
 cp packages/delivery/.env.example packages/delivery/.env
 ```
 
-Main service `.env`:
+For a minimal local setup, configure:
 
-- required: `DATABASE_URL`
-- recommended: `REDIS_URL`
-- required: `SUPPORTED_CHAIN_IDS`
-- required: `RPC_URL_*` for every chain listed in `SUPPORTED_CHAIN_IDS`
-- optional: `ENVIO_ENDPOINT` to enable indexed semantic signals
-- optional: `MONARCH_GRAPHQL_API_KEY` if that indexed endpoint requires bearer auth
-- optional: `HYPERSYNC_MAX_LOGS_PER_REQUEST`, `HYPERSYNC_MAX_LOGS_PER_QUERY`, and `HYPERSYNC_MAX_PAGES_PER_QUERY` if raw-event queries are too broad for the defaults
-- optional: `ENVIO_API_TOKEN` to enable `raw-events`
-- optional: `WEBHOOK_SECRET` if you will use signed delivery
-- optional: `REGISTER_ADMIN_KEY` if you want to gate `POST /api/v1/auth/register`
-- optional but recommended for browser auth: `AUTH_SIWE_DOMAIN`, `AUTH_SIWE_URI`
-- optional: `DELIVERY_BASE_URL`, `DELIVERY_ADMIN_KEY` if you want megabat-native Telegram status routes
+- `DATABASE_URL`
+- `SUPPORTED_CHAIN_IDS`
+- one `RPC_URL_<chainId>` for each configured chain
 
-When you run the Docker stack, Compose overrides `DELIVERY_BASE_URL` to `http://delivery:3100` so the API container can reach the delivery container over the Docker network.
-megabat now loads the supported chain set once at startup from `SUPPORTED_CHAIN_IDS`, requires a matching archive `RPC_URL_<chainId>` for each one, and rejects signals that target any other chain.
+Optional but common:
 
-If `ENVIO_ENDPOINT` is missing, indexed semantic refs stay disabled.
-If `ENVIO_API_TOKEN` is missing, `raw-events` stay disabled.
-megabat still boots, reports that through `GET /health`, and rejects unsupported signal definitions through the API.
+- `REDIS_URL`
+- `ENVIO_ENDPOINT` for indexed protocol data
+- `ENVIO_API_TOKEN` for raw-event queries through HyperSync
+- `WEBHOOK_SECRET` if you will use signed webhook delivery
+- `REGISTER_ADMIN_KEY` if you want to gate self-serve API key creation
+- `AUTH_SIWE_DOMAIN` and `AUTH_SIWE_URI` for browser auth
 
-Delivery service `packages/delivery/.env`:
+If you want managed Telegram delivery as well, also configure in `packages/delivery/.env`:
 
-- required only if you are running Telegram delivery
-- required: `TELEGRAM_BOT_TOKEN`
-- required: `LINK_BASE_URL`
-- use the same shared webhook secret as the main service when delivery is enabled
-- optional: `ADMIN_KEY` if you want a dedicated secret for delivery admin/internal routes
+- `TELEGRAM_BOT_TOKEN`
+- `LINK_BASE_URL`
 
-The example files already include the local Docker database URLs.
+## Start the stack
 
-Database lifecycle:
-
-- Docker Postgres creates `megabat` on first boot via `POSTGRES_DB`
-- Docker Postgres creates `megabat_delivery` on first boot via `docker/postgres/init`
-- versioned SQL migrations then run before the app services start
-
-## Start The Stack
-
-Core stack only:
+Core backend only:
 
 ```bash
 pnpm docker:up
 ```
 
-Core stack plus Telegram delivery:
+Backend plus Telegram delivery:
 
 ```bash
 pnpm docker:up:all
 ```
 
-Useful commands:
-
-```bash
-pnpm docker:logs
-pnpm docker:logs:all
-pnpm docker:down
-pnpm docker:reset
-```
-
-If you prefer raw Docker Compose, the wrappers call `docker compose` underneath.
-The wrappers also recreate the one-shot migration containers so pending migrations are reapplied cleanly on each startup.
-
-## Health Checks
+## Confirm the backend is running
 
 ```bash
 curl http://localhost:3000/health
 curl http://localhost:3000/chains
 curl http://localhost:3000/ready
-curl http://localhost:3100/health
-docker compose ps
 ```
 
-If you only started the core stack, `3100` will not be up.
+What these endpoints mean:
 
-`GET /health` includes source-family capability status plus the configured supported-chain report.
-`GET /chains` returns the explicit supported-chain set and the required archive RPC env names megabat loaded at startup.
-`GET /ready` performs a cached dependency probe against PostgreSQL, Redis, every configured archive RPC chain, and any configured indexed/raw providers.
+- `/health` — fast liveness check
+- `/chains` — the chain allowlist Megabat loaded at startup
+- `/ready` — stricter dependency readiness check
 
-## Live Integration Tests
+## Create credentials
 
-Most tests run locally with no extra setup:
+### Option 1: API key
 
-```bash
-pnpm test
-```
-
-Live network suites are opt-in and environment-gated:
-
-- fixed snapshot Envio + RPC checks:
-  `RUN_LIVE_SNAPSHOT_TESTS=true pnpm test:integration:fixed`
-- live RPC block resolver checks:
-  `RUN_LIVE_RPC_INTEGRATION_TESTS=true pnpm test:integration:rpc`
-- live HyperSync raw-event checks:
-  `RUN_LIVE_HYPERSYNC_TESTS=true pnpm test:integration:hypersync`
-
-For the live HyperSync suite, configure:
-
-- `ENVIO_API_TOKEN` for HyperSync access
-- `RPC_URL_1` for mainnet timestamp -> block resolution
-- optional `HYPERSYNC_URL_1` if you want to override the default endpoint
-
-For the fixed Envio + RPC snapshot suite, configure:
-
-- `ENVIO_ENDPOINT`
-- `RPC_URL_1`
-
-## Create An API Key
+Create a local account and API key:
 
 ```bash
 curl -sS -X POST http://localhost:3000/api/v1/auth/register \
@@ -139,29 +84,30 @@ curl -sS -X POST http://localhost:3000/api/v1/auth/register \
   -d '{"name":"local-dev","key_name":"curl"}'
 ```
 
-If `REGISTER_ADMIN_KEY` is set, also send:
+If `REGISTER_ADMIN_KEY` is configured, include:
 
-```http
-X-Admin-Key: <register_admin_key>
+```bash
+curl -sS -X POST http://localhost:3000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Key: <register_admin_key>" \
+  -d '{"name":"local-dev","key_name":"curl"}'
 ```
 
-Use the returned key on all protected API calls:
+The response includes an API key you can use as:
 
 ```http
 X-API-Key: megabat_...
 ```
 
-## Browser Login Smoke Test
+### Option 2: Browser auth with SIWE
 
-1. Request a nonce:
+Request a nonce:
 
 ```bash
 curl -sS -X POST http://localhost:3000/api/v1/auth/siwe/nonce
 ```
 
-2. Build a SIWE message for the returned `nonce`, `domain`, and `uri`.
-3. Sign it in your wallet client.
-4. Verify it:
+Then sign the returned nonce with your wallet and verify it through:
 
 ```bash
 curl -sS -X POST http://localhost:3000/api/v1/auth/siwe/verify \
@@ -169,46 +115,80 @@ curl -sS -X POST http://localhost:3000/api/v1/auth/siwe/verify \
   -d '{"message":"<signed-siwe-message>","signature":"0x..."}'
 ```
 
-The response returns both a session cookie and a `session_token`. You can use that token as:
+Megabat returns both:
 
-```http
-Authorization: Bearer megaba..._...
+- an `HttpOnly` session cookie for browser clients
+- a `session_token` for bearer-style clients
+
+## Create your first signal
+
+The example below is valid against the backend schema today. It creates a threshold signal that watches a Morpho position and sends alerts to your webhook.
+
+```bash
+curl -sS -X POST http://localhost:3000/api/v1/signals \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <your_api_key>" \
+  -d '{
+    "name": "Large supplier position",
+    "definition": {
+      "scope": {
+        "chains": [1],
+        "protocol": "morpho",
+        "addresses": ["0x1111111111111111111111111111111111111111"]
+      },
+      "window": { "duration": "1h" },
+      "conditions": [
+        {
+          "type": "threshold",
+          "metric": "Morpho.Position.supplyShares",
+          "chain_id": 1,
+          "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+          "address": "0x1111111111111111111111111111111111111111",
+          "operator": ">",
+          "value": "1000000000000000000"
+        }
+      ]
+    },
+    "webhook_url": "https://example.com/webhook",
+    "cooldown_minutes": 10,
+    "repeat_policy": { "mode": "cooldown" }
+  }'
 ```
 
-## Create Your First Signal
+## Try a raw-event signal
 
-Use the endpoint contract in [API.md](../reference/api.md) and the canonical signal examples in [DSL.md](../product/dsl.md).
+This example counts ERC-20 transfers from a specific token contract over the last hour.
 
-Before writing a signal, choose one DSL reference family:
-
-- state metrics for current or historical onchain state
-- indexed metrics for semantic indexed entities and event history
-- raw events for decoded log scans like ERC-20 transfers or swap activity
-
-If you are bypassing megabat-managed Telegram delivery and setting the raw
-`webhook_url` manually, use:
-
-```text
-http://delivery:3100/webhook/deliver
+```bash
+curl -sS -X POST http://localhost:3000/api/v1/signals \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <your_api_key>" \
+  -d '{
+    "name": "Busy ERC-20 token",
+    "definition": {
+      "scope": { "chains": [1], "protocol": "all" },
+      "window": { "duration": "1h" },
+      "conditions": [
+        {
+          "type": "raw-events",
+          "aggregation": "count",
+          "operator": ">",
+          "value": 25,
+          "chain_id": 1,
+          "event": {
+            "kind": "erc20_transfer",
+            "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+          }
+        }
+      ]
+    },
+    "webhook_url": "https://example.com/webhook"
+  }'
 ```
 
-Do not use `http://localhost:3100/webhook/deliver` for container-to-container delivery. From the worker container, `localhost` is the worker itself.
+## What to read next
 
-## Telegram Smoke Test
-
-1. Start the full stack with `pnpm docker:up:all`.
-2. Send `/start` to the bot.
-3. Open the returned link and connect it with your megabat `user_id`, or exchange the token through `POST /api/v1/me/integrations/telegram/link` once you have a session.
-4. Create a signal with `delivery: { "provider": "telegram" }`, or manually point `webhook_url` at the delivery service if you are bypassing the managed path.
-5. Wait for the worker to evaluate and dispatch the webhook.
-
-The delivery contract is documented in [TELEGRAM_DELIVERY.md](../integrations/telegram-delivery.md).
-
-## Next Docs
-
-- [DSL.md](../product/dsl.md) for signal definitions, reference families, and examples
-- [ARCHITECTURE.md](../internals/architecture.md) for internal system design
-- [API.md](../reference/api.md) for routes and payloads
-- [AUTH.md](../reference/auth.md) for auth and register-gate behavior
-- [DEPLOYMENT.md](deployment.md) for production deployment
-- [WEBAPP_INTEGRATION.md](../integrations/webapp-integration.md) for backend integration
+- **What You Can Build** for the capability model and boundaries
+- **Writing Signals** for supported condition types and more examples
+- **Auth** for the full authentication model
+- **API Reference** for all routes

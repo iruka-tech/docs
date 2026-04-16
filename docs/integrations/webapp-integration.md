@@ -1,117 +1,103 @@
 # Webapp Integration
 
-This document owns the backend integration contract for web applications that sit in front of megabat.
+This page is for teams building a frontend on top of Megabat.
 
-## Core Model
+The key idea is:
 
-megabat now exposes both browser auth and API auth directly.
+- Megabat owns signal evaluation, auth, and delivery behavior
+- your web app owns the user experience
+
+That keeps the backend consistent while letting you build your own product surface.
+
+## Recommended architecture
 
 Use this split:
 
-- megabat owns signal evaluation, delivery, login identities, browser sessions, and API keys
-- the Megabat web app acts as the primary console and UX layer
-- Next.js can stay a thin client or thin BFF instead of becoming the long-term identity owner
+- **Megabat backend** — signals, auth, sessions, API keys, history, delivery integration
+- **Your web app** — dashboards, forms, signal builders, account UX, team workflows
 
-## Canonical Owner
+Your frontend can call Megabat:
 
-Today the canonical owner is still `users.id`.
+- directly from the browser using SIWE-backed sessions
+- through a thin backend-for-frontend if you need composition or extra policy checks
 
-That ID is used for:
+## Browser auth flow
 
-- signal ownership
-- API-key ownership
-- browser session ownership
-- Telegram link ownership
+Recommended sequence:
 
-Treat the current `users` row as the single megabat account/owner record.
+1. call `POST /api/v1/auth/siwe/nonce`
+2. sign the SIWE message in the wallet
+3. call `POST /api/v1/auth/siwe/verify`
+4. let Megabat own the session cookie
+5. call protected Megabat routes from the web app
 
-## Browser Call Pattern
+This keeps identity and signal ownership in one place.
 
-Recommended path:
+## API-key flow
 
-1. browser requests `POST /api/v1/auth/siwe/nonce`
-2. wallet signs a SIWE message for the configured megabat domain and URI
-3. browser posts `message` and `signature` to `POST /api/v1/auth/siwe/verify`
-4. megabat sets the session cookie and returns the same session token for bearer-style clients
-5. browser calls megabat product routes directly or through a very thin BFF
+For server-side or machine integrations:
 
-Protected product routes accept:
-
-- session cookie
-- session bearer token
-- API key
-
-## API Client Pattern
-
-Programmatic clients should keep using API keys.
-
-Recommended path:
-
-1. create a megabat owner and key through `POST /api/v1/auth/register`
-2. store the returned `user_id` and `api_key`
+1. call `POST /api/v1/auth/register`
+2. store the returned `api_key`
 3. call protected routes with `X-API-Key`
 
-If you want to gate self-serve key creation, set `REGISTER_ADMIN_KEY`.
+## Typical frontend responsibilities
 
-## Console Pattern
+A frontend on top of Megabat usually handles:
 
-The normal product shape is:
+- listing signals
+- creating and editing signal definitions
+- showing evaluation history
+- showing notification history
+- Telegram link UX
+- previews or simulation workflows
 
-- humans sign in through browser auth
-- humans manage their signals and integrations from the web app
-- the web app becomes the main control console
-- API clients reuse the same underlying owner model through API keys
+## Typical backend responsibilities inside Megabat
 
-This means the web app is not a separate identity silo. It is the main UI for the same megabat control plane.
+Megabat should remain the source of truth for:
 
-## Telegram Contract
+- signal ownership
+- auth sessions
+- API key ownership
+- signal evaluation semantics
+- repeat policy behavior
+- Telegram delivery linkage and message dispatch
 
-For direct delivery integration:
+## When a thin BFF still helps
 
-- Telegram linking uses `app_user_id = users.id`
-- the worker already emits `context.app_user_id = signal.user_id`
-- `GET /api/v1/me/integrations/telegram` reads the current user’s link status through megabat
-- `POST /api/v1/me/integrations/telegram/link` lets the web app exchange a Telegram token for the current megabat user
+A thin BFF can still be useful for:
 
-The web app no longer needs to know or submit the raw megabat owner ID to delivery directly.
+- request composition
+- caching
+- UI-specific response shaping
+- billing or entitlement checks
+- hiding private service-to-service calls
 
-For signal creation, the same principle applies:
+The important principle is that the BFF should not redefine the signal engine contract.
 
-- custom third-party webhooks still use `webhook_url`
-- first-party Telegram delivery should use `delivery: { "provider": "telegram" }`
-- megabat resolves the actual delivery webhook target from server config
-- signal responses include `repeat_policy`
-- repeat policy should be configured through:
-  - `{"mode":"cooldown"}`
-  - `{"mode":"post_first_alert_snooze","snooze_minutes":1440}`
-  - `{"mode":"until_resolved"}`
-- `cooldown_minutes` remains the interval for `mode = "cooldown"`
-- history responses now include normalized `condition_results` and `conditions_met` for alert explainability
+## Telegram integration from a web app
 
-The browser should not know whether the backend uses `delivery`, `localhost`, a Railway private hostname, or another internal address.
+For a web app, prefer the Megabat-native Telegram endpoints:
 
-Telegram-specific note:
+- `GET /api/v1/me/integrations/telegram`
+- `POST /api/v1/me/integrations/telegram/link`
 
-- Telegram inline `Why` and snooze actions are handled entirely by the delivery service
-- the web app does not need to implement or proxy those callbacks
+This keeps Telegram account linking inside the same Megabat account model used for signals.
 
-## When To Still Use A Thin BFF
+## Delivery choice in product UX
 
-A thin BFF is still useful for:
+A clean UI usually presents two destination modes:
 
-- UI-specific composition
-- caching or coalescing requests
-- hiding non-browser-safe internal calls
-- future billing or entitlement checks that are not part of megabat yet
+- **Webhook** — for system integrations
+- **Telegram** — for operator alerts
 
-What the BFF should not own long term:
+That maps directly to the create-signal payload:
 
-- the canonical megabat user/account mapping
-- session issuance for megabat-owned auth
-- Telegram owner translation for the common direct-delivery path
+- webhook mode → send `webhook_url`
+- Telegram mode → send `delivery: { "provider": "telegram" }`
 
-## Related Docs
+## What to read next
 
-- [AUTH.md](../reference/auth.md) for session and API-key rules
-- [API.md](../reference/api.md) for routes
-- [TELEGRAM_DELIVERY.md](telegram-delivery.md) for the delivery-side contract
+- Read **Auth** for SIWE and API-key details
+- Read **API Reference** for route-level behavior
+- Read **Telegram Delivery** if you want first-party operator notifications

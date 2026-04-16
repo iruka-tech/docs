@@ -1,203 +1,149 @@
-# Public Signal Model
+# What You Can Build
 
-This document is the first-principles public explanation of what megabat can express today.
+This page explains Megabat from an integrator's point of view.
 
-Read this before [DSL.md](dsl.md) if you are new to the system.
+The goal is simple: understand what Megabat can evaluate today, what kinds of alerts it is good at, and where the boundaries are.
 
-`DSL.md` owns exact syntax.
-This document owns the mental model, capability boundaries, and limitations.
+## Core idea
 
-## The Three Public Layers
+Megabat evaluates saved **signals**.
 
-Think about megabat in this order:
+A signal is a rule that says:
 
-1. Generic state reads
-2. Generic event aggregation
-3. Sugared protocol helpers
+- what to watch
+- over what time window
+- which conditions must be met
+- where alerts should be delivered
 
-That is the cleanest way to understand the product surface.
+Megabat then reevaluates that rule and emits notifications when it matches.
 
-Important:
+## The five condition types
 
-- `market` is not a first-class primitive
-- `market_id` and `scope.markets` are Morpho-oriented sugar
-- `contract_address`, `state_ref.filters`, and raw-event definitions are closer to the true underlying model
+Megabat supports five condition types in the public API today.
 
-## 1. Generic State Reads
+### 1. Threshold
 
-Today, megabat exposes generic bound state reads through `state_ref`.
-
-Example:
-
-```json
-{
-  "type": "threshold",
-  "state_ref": {
-    "protocol": "erc4626",
-    "entity_type": "Position",
-    "field": "shares",
-    "filters": [
-      { "field": "chainId", "op": "eq", "value": 1 },
-      { "field": "contractAddress", "op": "eq", "value": "0xVaultAddress" },
-      { "field": "owner", "op": "eq", "value": "0xOwnerAddress" }
-    ]
-  },
-  "operator": ">",
-  "value": "1000000000000000000"
-}
-```
-
-What this means:
-
-- read one bound state value
-- at the current block or at a historical point, depending on condition type
-- compare it to a threshold or compare it to an earlier snapshot
-
-What is generic here:
-
-- the overall shape
-- the filter model
-- the time-travel behavior
-
-What is still opinionated:
-
-- supported `protocol + entity_type + field + filters` combinations are registry-backed
-- this is not yet a fully arbitrary ABI-call DSL
-
-Not supported today:
-
-```json
-{
-  "contractAddress": "0x...",
-  "selector": "0x...",
-  "calldata": "0x...",
-  "result": { "tuple": [...] }
-}
-```
-
-That lower-level ABI-call shape is a reasonable future direction, but it is not the current public contract.
-
-## 2. Generic Event Aggregation
-
-Today, megabat exposes generic event aggregation through `type: "raw-events"`.
-
-Example:
-
-```json
-{
-  "type": "raw-events",
-  "aggregation": "count",
-  "operator": ">",
-  "value": 10,
-  "window": { "duration": "1h" },
-  "chain_id": 1,
-  "event": {
-    "kind": "contract_event",
-    "contract_addresses": ["0xTokenAddress"],
-    "signature": "Transfer(address indexed from, address indexed to, uint256 value)"
-  }
-}
-```
-
-What this means:
-
-- fetch all matching logs
-- over the requested timeframe
-- aggregate the chosen field or count rows
-- compare the result to a threshold
-
-This is the current generic event primitive.
-
-What is supported:
-
-- `count`, `sum`, `avg`, `min`, `max`
-- well-known event presets
-- arbitrary ABI event signatures via `contract_event`
-- contract filtering
-- decoded-argument filtering
-
-What is not exposed today:
-
-- bare `topic0` / `topic1` / `topic2` / `topic3` as the primary public shape
-- a fully generic log-query surface written directly in topic-space
-
-## 3. Sugared Protocol Helpers
-
-The `metric` field is sugar on top of the generic state/event surfaces.
+Use this when you want to compare one value against a fixed threshold.
 
 Examples:
 
-- `Morpho.Position.supplyShares`
-- `Morpho.Market.utilization`
-- `ERC4626.Position.shares`
+- a Morpho position has more than 1 ETH worth of supply shares
+- a vault balance is below a minimum threshold
+- more than 100 matching events happened in the last hour
 
-These are convenience names, not a separate execution engine.
+A threshold condition can use either:
 
-They compile down into the same internal references used by raw state and event paths.
+- `metric` — a protocol-aware metric Megabat already understands
+- `state_ref` — an explicit state reference
 
-## What You Can Express Today
+### 2. Change
 
-### Threshold
+Use this when you care about movement over time rather than the current point-in-time value.
 
-Supported with:
+Examples:
 
-- `metric`
-- `state_ref`
-- `raw-events`
+- a position decreased by 10% over 1 hour
+- a balance increased by a fixed absolute amount over 1 day
 
-Typical uses:
-
-- current state above/below a threshold
-- event count or sum in a timeframe
-
-### Change
-
-Supported with:
+Change conditions work with:
 
 - `metric`
 - `state_ref`
 
-Typical uses:
+### 3. Group
 
-- share balances dropped over a window
-- state increased/decreased by percent or absolute amount
+Use this when the same rule should be checked across many addresses, and you care about how many of them match.
 
-### Aggregate
+Examples:
 
-Supported today with:
+- at least 3 of 5 wallets received a token in the last 30 minutes
+- 2 of 4 tracked addresses now hold less than a minimum position size
 
-- `metric`
+### 4. Aggregate
 
-Typical uses:
+Use this when you want one combined value rather than one value per address.
 
-- sum state across a set of tracked addresses
-- aggregate indexed event metrics across a scoped set
+Supported aggregations:
 
-### Group
+- `sum`
+- `avg`
+- `min`
+- `max`
+- `count`
 
-Supported today with inner:
+Examples:
 
-- `threshold`
-- `change`
+- total exposure across many addresses exceeds a threshold
+- average value across a set of positions drops below a target
 
-Typical uses:
+### 5. Raw events
 
-- N-of-M tracked addresses match the same state condition
+Use this when the cleanest model is to scan decoded events over a rolling window.
 
-## What You Cannot Express Today
+Examples:
 
-These are important limitations of the current public API:
+- count ERC-20 transfers
+- sum decoded event values
+- monitor swaps for supported AMM protocols
+- watch a custom ABI event signature through `contract_event`
 
-- no arbitrary ABI-call state DSL using raw `selector` / `calldata` / tuple decoding
-- no public raw topic-based log query language as the primary API shape
-- no `aggregate + state_ref`
-- no nested `raw-events` inside `group`
-- no user-authored arbitrary math expressions over raw refs
-- no generalized protocol discovery or vault discovery
+This is the right choice when your integration is event-driven and you care more about event activity than protocol-specific abstractions.
 
-## String Enums You Can Use Today
+## What Megabat can monitor well
 
-### Raw Event `kind`
+Megabat is a strong fit when you need:
+
+- protocol-aware monitoring for supported metrics
+- explicit state checks over current or historical windows
+- decoded raw-event monitoring
+- alerting across many addresses
+- multi-chain alerting with one backend
+- webhook-first automation with optional Telegram delivery
+
+## Delivery options
+
+A signal must define one delivery path.
+
+### Custom webhook
+
+Use `webhook_url` when your application wants to receive alerts directly.
+
+This is the best choice for:
+
+- backend automation
+- Slack, Discord, or internal notifier fan-out on your side
+- workflow engines
+- custom incident systems
+
+### Managed Telegram delivery
+
+Use:
+
+```json
+{ "delivery": { "provider": "telegram" } }
+```
+
+Megabat will resolve the internal delivery target and send alerts through the Telegram adapter.
+
+This is the best choice for:
+
+- direct human alerting
+- team or operator notifications
+- using Telegram-specific actions such as `Why` and snooze
+
+## Repeat behavior
+
+Megabat supports three repeat policies:
+
+- `cooldown`
+- `post_first_alert_snooze`
+- `until_resolved`
+
+Use these to control how often a matching signal should notify again.
+
+## Supported raw-event presets
+
+Megabat supports these raw-event kinds in the public API:
 
 - `erc20_transfer`
 - `erc20_approval`
@@ -209,42 +155,37 @@ These are important limitations of the current public API:
 - `swap`
 - `contract_event`
 
-### Swap `protocols`
+For `swap`, the currently supported protocol presets are:
 
 - `uniswap_v2`
 - `uniswap_v3`
 
-### Scope `protocol`
+## Current boundaries
 
-- `morpho`
-- `all`
+Megabat is expressive, but it is not an arbitrary onchain programming language.
 
-## Numeric Inputs
+Important current limits:
 
-State-backed numeric inputs can be:
+- no arbitrary ABI-call DSL using raw function selectors and calldata
+- no general-purpose math expression language authored by end users
+- no public topic-level log query language as the primary API shape
+- aggregate conditions require `metric` rather than `state_ref`
+- `raw-events` is a top-level condition type; it is not exposed as a nested condition inside `group`
 
-- JSON numbers
-- decimal strings
+Those limits are deliberate: Megabat aims to stay composable and predictable for integrators.
 
-Use strings when values may exceed JavaScript's safe integer range.
+## How to choose the right condition type
 
-Examples:
+Use this rule of thumb:
 
-- `"1000000000000000000"`
-- `"500000000000000000"`
+- choose **threshold** if you care about the current value
+- choose **change** if you care about movement over time
+- choose **group** if the same test should be applied across many addresses
+- choose **aggregate** if you need one combined number
+- choose **raw-events** if the source of truth is event activity
 
-Percent values remain ordinary JSON numbers.
+## What to read next
 
-## Practical Reading Order
-
-If you are building against megabat:
-
-1. Read this document
-2. Read [DSL.md](dsl.md) for exact syntax
-3. Read [API.md](../reference/api.md) for routes and payload wrappers
-
-If you are changing megabat internals:
-
-1. Read [ARCHITECTURE.md](../internals/architecture.md)
-2. Read [SOURCES.md](../internals/sources.md)
-3. Read [INTERNAL_SIGNAL_ENGINE.md](../internals/internal-signal-engine.md)
+- Read **Writing Signals** for exact payload shape and examples
+- Read **API Reference** for endpoint details
+- Read **Telegram Delivery** if you want managed operator alerts
