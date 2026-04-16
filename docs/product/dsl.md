@@ -187,24 +187,44 @@ Supported aggregations:
 - `max`
 - `count`
 
-## Raw-events example: ERC-20 transfers
+## Raw-events example: ERC-20 outbound transfer volume
+
+This example tracks total ERC-20 transfer volume sent from one address over the last hour.
 
 ```json
 {
   "type": "raw-events",
-  "aggregation": "count",
+  "aggregation": "sum",
+  "field": "value",
   "operator": ">",
-  "value": 25,
+  "value": 1000000000000000000000,
   "chain_id": 1,
   "window": { "duration": "1h" },
   "event": {
     "kind": "erc20_transfer",
     "contract_addresses": ["0x3333333333333333333333333333333333333333"]
-  }
+  },
+  "filters": [
+    {
+      "field": "from",
+      "op": "eq",
+      "value": "0x1111111111111111111111111111111111111111"
+    }
+  ]
 }
 ```
 
+You can also filter by `to`, or by both `from` and `to` in the same raw-events condition.
+
+For ERC-20 transfers, common decoded filter fields include:
+
+- `from`
+- `to`
+- `value`
+
 For `count`, `field` is optional.
+
+Megabat can track gross inbound or outbound volume this way. Netting inflow minus outflow for the same address is not exposed as a single raw-events primitive today.
 
 ## Raw-events example: swaps
 
