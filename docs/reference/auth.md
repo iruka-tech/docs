@@ -71,8 +71,8 @@ Example response:
   "provider": "wallet",
   "nonce": "abc123...",
   "expires_at": "2026-03-17T08:10:00.000Z",
-  "domain": "localhost:3000",
-  "uri": "http://localhost:3000"
+  "domain": "megabat.example.com",
+  "uri": "https://megabat.example.com"
 }
 ```
 
@@ -87,9 +87,9 @@ Request body:
 
 ```json
 {
-  "message": "localhost:3000 wants you to sign in with your Ethereum account: ...",
+  "message": "megabat.example.com wants you to sign in with your Ethereum account: ...",
   "signature": "0x...",
-  "name": "Local Dev"
+  "name": "Acme Alerts"
 }
 ```
 

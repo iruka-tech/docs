@@ -18,7 +18,7 @@ Megabat lets you:
 
 If you are new, read in this order:
 
-1. **Getting Started** — how to run Megabat locally, create credentials, and make your first API call
+1. **Getting Started** — how to connect to your Megabat environment, choose auth, and make your first API call
 2. **What You Can Build** — the product model, supported condition types, and where Megabat fits well
 3. **Writing Signals** — the request shape and concrete examples you can send today
 4. **Auth** — API keys, SIWE sessions, and protected routes
@@ -45,6 +45,6 @@ Megabat is especially useful when you want to monitor:
 
 ## Where to go next
 
-- Read **Getting Started** if you want to run it now
+- Read **Getting Started** if you want to make your first real integration call
 - Read **What You Can Build** if you want to decide whether Megabat fits your use case
 - Read **Writing Signals** if you already know you want to integrate

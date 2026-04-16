@@ -2,10 +2,12 @@
 
 This page documents the public HTTP surface for integrators.
 
-Base URL examples in this page use local development defaults:
+Base URL examples in this page use a placeholder Megabat environment:
 
-- API root: `http://localhost:3000`
-- API namespace: `http://localhost:3000/api/v1`
+- API root: `<your_megabat_base_url>`
+- API namespace: `<your_megabat_base_url>/api/v1`
+
+Use the environment URL provided to your team.
 
 ## Public endpoints
 

@@ -112,7 +112,9 @@ Supported directions:
 
 ## Group example
 
-This example checks whether at least 2 of 3 addresses satisfy the same threshold condition.
+This example checks whether at least 2 of 3 tracked addresses satisfy the same threshold condition.
+
+`group` is address-based in the public API today. It is not a generic "group over arbitrary IDs" construct.
 
 ```json
 {
@@ -144,7 +146,11 @@ This example checks whether at least 2 of 3 addresses satisfy the same threshold
 
 Aggregate conditions are evaluated against the surrounding signal scope.
 
-If you aggregate a position metric, include the addresses you want to aggregate in `scope.addresses`.
+What gets aggregated depends on the metric:
+
+- for position metrics, include the tracked addresses in `scope.addresses`
+- for market metrics, use `scope.markets` or `market_id`
+- for event metrics, the aggregate is computed over the matching event set, optionally narrowed by filters
 
 Example definition snippet:
 

@@ -102,15 +102,6 @@ Good fit for:
 - liquidity monitoring
 - operator alerting for bursts in trading activity
 
-**Status today:** live through the public `raw-events` API.
-
-Current scope:
-
-- supported as `event.kind = "swap"`
-- currently supports `uniswap_v2` and `uniswap_v3`
-- exposes normalized fields such as `amount0_abs`, `amount1_abs`, and `swap_protocol`
-- requires raw-events support to be enabled in the backend environment
-
 Example pattern:
 
 - sum `amount0_abs` for `swap` events over 30 minutes
@@ -167,8 +158,8 @@ Use this shortcut:
 
 - want to watch a **value now** → use `threshold`
 - want to watch a **value changing over time** → use `change`
-- want to watch **many addresses together** → use `group`
-- want **one combined value** → use `aggregate`
+- want to watch **many tracked addresses together** → use `group`
+- want **one combined value across a scoped set** → use `aggregate`
 - want to watch **event activity** → use `raw-events`
 
 ## What to read next

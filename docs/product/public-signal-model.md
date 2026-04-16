@@ -52,7 +52,9 @@ Change conditions work with:
 
 ### 3. Group
 
-Use this when the same rule should be checked across many addresses, and you care about how many of them match.
+Use this when the same rule should be checked across many tracked addresses, and you care about how many of them match.
+
+In the public API today, `group` is specifically address-based.
 
 Examples:
 
@@ -61,7 +63,13 @@ Examples:
 
 ### 4. Aggregate
 
-Use this when you want one combined value rather than one value per address.
+Use this when you want one combined value across a scoped set rather than one result per entity.
+
+That scoped set depends on the metric:
+
+- for position metrics, aggregation is typically across `scope.addresses`
+- for market metrics, aggregation can be across `scope.markets`
+- for event metrics, aggregation runs across the matching event set
 
 Supported aggregations:
 
@@ -75,6 +83,7 @@ Examples:
 
 - total exposure across many addresses exceeds a threshold
 - average value across a set of positions drops below a target
+- a combined value across tracked markets crosses a threshold
 
 ### 5. Raw events
 
@@ -155,25 +164,6 @@ Megabat supports these raw-event kinds in the public API:
 - `swap`
 - `contract_event`
 
-## Is swap live today?
-
-Yes — swap monitoring is live today through the public `raw-events` API.
-
-Current production shape:
-
-- use `event.kind = "swap"`
-- supported protocol presets are `uniswap_v2` and `uniswap_v3`
-- if you omit `protocols`, Megabat queries all supported swap presets
-- normalized fields include `amount0_abs`, `amount1_abs`, and `swap_protocol`
-- raw-events support must be enabled in the backend environment
-
-That means swap is live as an event-driven integration primitive, not as a separate higher-level protocol abstraction.
-
-For `swap`, the currently supported protocol presets are:
-
-- `uniswap_v2`
-- `uniswap_v3`
-
 ## Current boundaries
 
 Megabat is expressive, but it is not an arbitrary onchain programming language.
@@ -183,6 +173,7 @@ Important current limits:
 - no arbitrary ABI-call DSL using raw function selectors and calldata
 - no general-purpose math expression language authored by end users
 - no public topic-level log query language as the primary API shape
+- `group` is address-based today; arbitrary ID-based grouping is not exposed in the public API
 - aggregate conditions require `metric` rather than `state_ref`
 - `raw-events` is a top-level condition type; it is not exposed as a nested condition inside `group`
 
@@ -194,8 +185,8 @@ Use this rule of thumb:
 
 - choose **threshold** if you care about the current value
 - choose **change** if you care about movement over time
-- choose **group** if the same test should be applied across many addresses
-- choose **aggregate** if you need one combined number
+- choose **group** if the same test should be applied across many tracked addresses
+- choose **aggregate** if you need one combined number across a scoped set
 - choose **raw-events** if the source of truth is event activity
 
 ## What to read next
