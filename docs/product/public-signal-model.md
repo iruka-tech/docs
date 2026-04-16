@@ -155,6 +155,20 @@ Megabat supports these raw-event kinds in the public API:
 - `swap`
 - `contract_event`
 
+## Is swap live today?
+
+Yes — swap monitoring is live today through the public `raw-events` API.
+
+Current production shape:
+
+- use `event.kind = "swap"`
+- supported protocol presets are `uniswap_v2` and `uniswap_v3`
+- if you omit `protocols`, Megabat queries all supported swap presets
+- normalized fields include `amount0_abs`, `amount1_abs`, and `swap_protocol`
+- raw-events support must be enabled in the backend environment
+
+That means swap is live as an event-driven integration primitive, not as a separate higher-level protocol abstraction.
+
 For `swap`, the currently supported protocol presets are:
 
 - `uniswap_v2`
