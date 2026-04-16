@@ -1,0 +1,9 @@
+node_modules/
+.docusaurus/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+src/
+docusaurus.config.ts
+sidebars.ts
+docs/intro.md
+.DS_Store
