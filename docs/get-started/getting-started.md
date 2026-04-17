@@ -78,7 +78,7 @@ curl -sS -X POST <your_megabat_base_url>/api/v1/signals \
       "conditions": [
         {
           "type": "threshold",
-          "metric": "Morpho.Position.supplyShares",
+          "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
           "chain_id": 1,
           "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
           "address": "0x1111111111111111111111111111111111111111",
@@ -108,15 +108,18 @@ curl -sS -X POST <your_megabat_base_url>/api/v1/signals \
       "window": { "duration": "1h" },
       "conditions": [
         {
-          "type": "raw-events",
-          "aggregation": "count",
+          "type": "threshold",
+          "source": {
+            "kind": "raw_event",
+            "aggregation": "count",
+            "chain_id": 1,
+            "event": {
+              "kind": "erc20_transfer",
+              "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+            }
+          },
           "operator": ">",
-          "value": 25,
-          "chain_id": 1,
-          "event": {
-            "kind": "erc20_transfer",
-            "contract_addresses": ["0x3333333333333333333333333333333333333333"]
-          }
+          "value": 25
         }
       ]
     },

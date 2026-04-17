@@ -67,7 +67,7 @@ This example checks whether a Morpho position is above a threshold.
 ```json
 {
   "type": "threshold",
-  "metric": "Morpho.Position.supplyShares",
+  "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
   "chain_id": 1,
   "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
   "address": "0x1111111111111111111111111111111111111111",
@@ -78,7 +78,8 @@ This example checks whether a Morpho position is above a threshold.
 
 Rules:
 
-- use exactly one of `metric` or `state_ref`
+- preferred input is `source`
+- compatibility inputs `metric` and `state_ref` are still accepted
 - `operator` must be one of `>`, `<`, `>=`, `<=`, `==`, `!=`
 - `value` can be a number or numeric string
 
@@ -89,7 +90,7 @@ This example checks whether a Morpho position decreased by 10% over 24 hours.
 ```json
 {
   "type": "change",
-  "metric": "Morpho.Position.supplyShares",
+  "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
   "chain_id": 1,
   "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
   "address": "0x1111111111111111111111111111111111111111",
@@ -113,8 +114,6 @@ Supported directions:
 ## Group example
 
 This example checks whether at least 2 of 3 tracked addresses satisfy the same threshold condition.
-
-`group` is address-based in the public API today. It is not a generic "group over arbitrary IDs" construct.
 
 ```json
 {
@@ -141,6 +140,39 @@ This example checks whether at least 2 of 3 tracked addresses satisfy the same t
   ]
 }
 ```
+
+Tracked-value form for event-style inner sources:
+
+```json
+{
+  "type": "group",
+  "tracked": {
+    "field": "oracleId",
+    "values": [101, 202, 303]
+  },
+  "logic": "AND",
+  "requirement": {
+    "count": 2,
+    "of": 3
+  },
+  "conditions": [
+    {
+      "type": "threshold",
+      "source": { "kind": "alias", "name": "Morpho.Event.Supply.assets" },
+      "chain_id": 1,
+      "market_id": "0x4444444444444444444444444444444444444444444444444444444444444444",
+      "operator": ">",
+      "value": 100
+    }
+  ]
+}
+```
+
+Rules:
+
+- set exactly one of `addresses` or `tracked`
+- generic tracked groups are currently limited to event-style inner sources
+- response/history payloads may include `matchedTargets` for tracked groups
 
 ## Aggregate example
 

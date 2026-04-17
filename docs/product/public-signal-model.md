@@ -31,10 +31,11 @@ Examples:
 - a vault balance is below a minimum threshold
 - more than 100 matching events happened in the last hour
 
-A threshold condition can use either:
+A threshold condition can use:
 
-- `metric` — a protocol-aware metric Megabat already understands
-- `state_ref` — an explicit state reference
+- `source` — the preferred unified numeric-block shape
+- `metric` — compatibility sugar for an alias Megabat already understands
+- `state_ref` — compatibility sugar for an explicit state source
 
 ### 2. Change
 
@@ -45,21 +46,26 @@ Examples:
 - a position decreased by 10% over 1 hour
 - a balance increased by a fixed absolute amount over 1 day
 
-Change conditions work with:
+Change conditions work with the same inputs:
 
+- `source`
 - `metric`
 - `state_ref`
 
 ### 3. Group
 
-Use this when the same rule should be checked across many tracked addresses, and you care about how many of them match.
+Use this when the same rule should be checked across many tracked targets, and you care about how many of them match.
 
-In the public API today, `group` is specifically address-based.
+In the public API today, `group` supports two target shapes:
+
+- legacy `addresses`
+- `tracked: { field, values }` for event-style grouping over non-address identifiers
 
 Examples:
 
 - at least 3 of 5 wallets received a token in the last 30 minutes
 - 2 of 4 tracked addresses now hold less than a minimum position size
+- at least 2 of 3 oracle IDs crossed an event threshold
 
 ### 4. Aggregate
 
@@ -173,8 +179,9 @@ Important current limits:
 - no arbitrary ABI-call DSL using raw function selectors and calldata
 - no general-purpose math expression language authored by end users
 - no public topic-level log query language as the primary API shape
-- `group` is address-based today; arbitrary ID-based grouping is not exposed in the public API
-- aggregate conditions require `metric` rather than `state_ref`
+- `group` supports either legacy `addresses` or generic `tracked: { field, values }`
+- generic tracked groups are currently limited to event-style inner sources
+- aggregate conditions accept `source` (with `metric` still supported as compatibility sugar)
 - `raw-events` is a top-level condition type; it is not exposed as a nested condition inside `group`
 
 Those limits are deliberate: Megabat aims to stay composable and predictable for integrators.
@@ -185,7 +192,7 @@ Use this rule of thumb:
 
 - choose **threshold** if you care about the current value
 - choose **change** if you care about movement over time
-- choose **group** if the same test should be applied across many tracked addresses
+- choose **group** if the same test should be applied across many tracked targets
 - choose **aggregate** if you need one combined number across a scoped set
 - choose **raw-events** if the source of truth is event activity
 

@@ -102,15 +102,18 @@ Example:
     "window": { "duration": "1h" },
     "conditions": [
       {
-        "type": "raw-events",
-        "aggregation": "count",
+        "type": "threshold",
+        "source": {
+          "kind": "raw_event",
+          "aggregation": "count",
+          "chain_id": 1,
+          "event": {
+            "kind": "erc20_transfer",
+            "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+          }
+        },
         "operator": ">",
-        "value": 100,
-        "chain_id": 1,
-        "event": {
-          "kind": "erc20_transfer",
-          "contract_addresses": ["0x3333333333333333333333333333333333333333"]
-        }
+        "value": 100
       }
     ]
   },
@@ -179,6 +182,11 @@ The response includes:
 - `conditions_met`
 
 This is useful for explainability and debugging integrations.
+
+For group results:
+
+- legacy address groups return `matchedAddresses`
+- generic tracked-value groups return `matchedTargets`
 
 ## Simulation
 
