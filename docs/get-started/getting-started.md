@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide is for integrators using a Megabat environment provided by our team.
+This guide is for integrators using an Iruka environment provided by our team.
 
 You do **not** need to run the backend yourself to evaluate the product or ship an integration.
 
@@ -8,7 +8,7 @@ You do **not** need to run the backend yourself to evaluate the product or ship 
 
 Before you start, make sure you have:
 
-- your Megabat **base URL**
+- your Iruka **base URL**
 - either an **API key** or access to **SIWE login**
 - a destination for alerts:
   - your own webhook endpoint, or
@@ -16,7 +16,7 @@ Before you start, make sure you have:
 
 In the examples below, replace:
 
-- `<your_megabat_base_url>` with your Megabat environment URL
+- `<your_iruka_base_url>` with your Iruka environment URL
 - `<your_api_key>` with your real API key
 
 ## Step 1: confirm the environment
@@ -24,9 +24,9 @@ In the examples below, replace:
 Check that the environment is reachable and see what chains are enabled.
 
 ```bash
-curl -sS <your_megabat_base_url>/health
-curl -sS <your_megabat_base_url>/chains
-curl -sS <your_megabat_base_url>/api/v1/catalog
+curl -sS <your_iruka_base_url>/health
+curl -sS <your_iruka_base_url>/chains
+curl -sS <your_iruka_base_url>/api/v1/catalog
 ```
 
 These endpoints tell you:
@@ -49,7 +49,7 @@ Use API keys for:
 Send protected requests with:
 
 ```http
-X-API-Key: megabat_...
+X-API-Key: iruka_...
 ```
 
 ### Option B: SIWE session
@@ -63,7 +63,7 @@ Read **Auth** for the full SIWE flow.
 This example creates a threshold signal that watches a Morpho position and sends alerts to your webhook.
 
 ```bash
-curl -sS -X POST <your_megabat_base_url>/api/v1/signals \
+curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <your_api_key>" \
   -d '{
@@ -98,7 +98,7 @@ curl -sS -X POST <your_megabat_base_url>/api/v1/signals \
 This example counts ERC-20 transfers from a specific token contract over the last hour.
 
 ```bash
-curl -sS -X POST <your_megabat_base_url>/api/v1/signals \
+curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <your_api_key>" \
   -d '{
@@ -132,13 +132,13 @@ curl -sS -X POST <your_megabat_base_url>/api/v1/signals \
 Useful follow-up routes:
 
 ```bash
-curl -sS <your_megabat_base_url>/api/v1/signals \
+curl -sS <your_iruka_base_url>/api/v1/signals \
   -H "X-API-Key: <your_api_key>"
 
-curl -sS <your_megabat_base_url>/api/v1/signals/<signal_id> \
+curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id> \
   -H "X-API-Key: <your_api_key>"
 
-curl -sS <your_megabat_base_url>/api/v1/signals/<signal_id>/history \
+curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id>/history \
   -H "X-API-Key: <your_api_key>"
 ```
 
@@ -158,4 +158,4 @@ Once the first signal works, most teams do one or more of these next:
 - **Writing Signals** for more request examples
 - **Auth** for API keys and SIWE sessions
 - **API Reference** for routes and payloads
-- **Webapp Integration** if you are embedding Megabat into a frontend product
+- **Webapp Integration** if you are embedding Iruka into a frontend product

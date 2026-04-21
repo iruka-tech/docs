@@ -1,6 +1,6 @@
 # Telegram Delivery
 
-Megabat can deliver alerts directly to Telegram through a managed delivery adapter.
+Iruka can deliver alerts directly to Telegram through a managed delivery adapter.
 
 Use this when you want operator-facing notifications without building your own messaging bridge.
 
@@ -16,10 +16,10 @@ If your system already has its own messaging or automation layer, use a custom `
 
 ## How it works
 
-1. a user connects their Telegram account to Megabat
+1. a user connects their Telegram account to Iruka
 2. you create a signal with `delivery: { "provider": "telegram" }`
-3. Megabat evaluates the signal
-4. when the rule matches, Megabat routes the alert through the delivery adapter
+3. Iruka evaluates the signal
+4. when the rule matches, Iruka routes the alert through the delivery adapter
 5. the delivery adapter sends the Telegram message to the linked chat
 
 ## Creating a Telegram-delivered signal
@@ -36,7 +36,7 @@ You do **not** need to supply the internal delivery webhook target yourself.
 
 ## Link status and linking endpoints
 
-Megabat exposes two integration endpoints for the current authenticated user:
+Iruka exposes two integration endpoints for the current authenticated user:
 
 - `GET /api/v1/me/integrations/telegram`
 - `POST /api/v1/me/integrations/telegram/link`
@@ -71,12 +71,12 @@ Applied by the Telegram adapter for a specific signal/chat pair.
 
 In practice:
 
-- repeat policy controls when Megabat should attempt another notification
+- repeat policy controls when Iruka should attempt another notification
 - Telegram snooze controls whether Telegram output should be suppressed temporarily
 
 ## Security
 
-Megabat signs delivery webhooks using `X-Megabat-Signature`.
+Iruka signs delivery webhooks using `X-Iruka-Signature`.
 
 The delivery adapter verifies:
 
@@ -97,4 +97,4 @@ Use a custom webhook instead if you need:
 ## What to read next
 
 - Read **API Reference** for signal creation and history routes
-- Read **Webapp Integration** if you are building a frontend on top of Megabat
+- Read **Webapp Integration** if you are building a frontend on top of Iruka

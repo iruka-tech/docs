@@ -1,6 +1,6 @@
 # Common Use Cases
 
-This page translates Megabat features into practical integration patterns.
+This page translates Iruka features into practical integration patterns.
 
 If you already understand the signal model and want to know how teams actually use it, start here.
 
@@ -110,7 +110,7 @@ Example pattern:
 
 ## 6. Custom protocol event monitoring
 
-**Goal:** watch an event that is not one of Megabat's prebuilt presets.
+**Goal:** watch an event that is not one of Iruka's prebuilt presets.
 
 Good fit for:
 

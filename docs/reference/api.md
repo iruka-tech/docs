@@ -2,10 +2,10 @@
 
 This page documents the public HTTP surface for integrators.
 
-Base URL examples in this page use a placeholder Megabat environment:
+Base URL examples in this page use a placeholder Iruka environment:
 
-- API root: `<your_megabat_base_url>`
-- API namespace: `<your_megabat_base_url>/api/v1`
+- API root: `<your_iruka_base_url>`
+- API namespace: `<your_iruka_base_url>/api/v1`
 
 Use the environment URL provided to your team.
 
@@ -55,7 +55,7 @@ It reports:
 
 Use `/chains` to inspect:
 
-- the explicit chain allowlist Megabat loaded
+- the explicit chain allowlist Iruka loaded
 - the required `RPC_URL_<chainId>` configuration names
 
 ### `GET /ready`
@@ -216,7 +216,7 @@ Common response patterns:
 
 ## Webhook delivery note
 
-When you use a custom `webhook_url`, Megabat will send alert notifications to your endpoint.
+When you use a custom `webhook_url`, Iruka will send alert notifications to your endpoint.
 
 When you use managed Telegram delivery, create the signal with:
 
@@ -224,7 +224,7 @@ When you use managed Telegram delivery, create the signal with:
 { "delivery": { "provider": "telegram" } }
 ```
 
-Megabat will resolve the actual delivery target internally.
+Iruka will resolve the actual delivery target internally.
 
 ## What to read next
 

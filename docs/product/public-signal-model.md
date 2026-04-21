@@ -1,12 +1,12 @@
 # What You Can Build
 
-This page explains Megabat from an integrator's point of view.
+This page explains Iruka from an integrator's point of view.
 
-The goal is simple: understand what Megabat can evaluate today, what kinds of alerts it is good at, and where the boundaries are.
+The goal is simple: understand what Iruka can evaluate today, what kinds of alerts it is good at, and where the boundaries are.
 
 ## Core idea
 
-Megabat evaluates saved **signals**.
+Iruka evaluates saved **signals**.
 
 A signal is a rule that says:
 
@@ -15,11 +15,11 @@ A signal is a rule that says:
 - which conditions must be met
 - where alerts should be delivered
 
-Megabat then reevaluates that rule and emits notifications when it matches.
+Iruka then reevaluates that rule and emits notifications when it matches.
 
 ## The five condition types
 
-Megabat supports five condition types in the public API today.
+Iruka supports five condition types in the public API today.
 
 ### 1. Threshold
 
@@ -34,7 +34,7 @@ Examples:
 A threshold condition can use:
 
 - `source` — the preferred unified numeric-block shape
-- `metric` — compatibility sugar for an alias Megabat already understands
+- `metric` — compatibility sugar for an alias Iruka already understands
 - `state_ref` — compatibility sugar for an explicit state source
 
 ### 2. Change
@@ -104,9 +104,9 @@ Examples:
 
 This is the right choice when your integration is event-driven and you care more about event activity than protocol-specific abstractions.
 
-## What Megabat can monitor well
+## What Iruka can monitor well
 
-Megabat is a strong fit when you need:
+Iruka is a strong fit when you need:
 
 - protocol-aware monitoring for supported metrics
 - explicit state checks over current or historical windows
@@ -138,7 +138,7 @@ Use:
 { "delivery": { "provider": "telegram" } }
 ```
 
-Megabat will resolve the internal delivery target and send alerts through the Telegram adapter.
+Iruka will resolve the internal delivery target and send alerts through the Telegram adapter.
 
 This is the best choice for:
 
@@ -148,7 +148,7 @@ This is the best choice for:
 
 ## Repeat behavior
 
-Megabat supports three repeat policies:
+Iruka supports three repeat policies:
 
 - `cooldown`
 - `post_first_alert_snooze`
@@ -158,7 +158,7 @@ Use these to control how often a matching signal should notify again.
 
 ## Supported raw-event presets
 
-Megabat supports these raw-event kinds in the public API:
+Iruka supports these raw-event kinds in the public API:
 
 - `erc20_transfer`
 - `erc20_approval`
@@ -172,7 +172,7 @@ Megabat supports these raw-event kinds in the public API:
 
 ## Current boundaries
 
-Megabat is expressive, but it is not an arbitrary onchain programming language.
+Iruka is expressive, but it is not an arbitrary onchain programming language.
 
 Important current limits:
 
@@ -184,7 +184,7 @@ Important current limits:
 - aggregate conditions accept `source` (with `metric` still supported as compatibility sugar)
 - `raw-events` is a top-level condition type; it is not exposed as a nested condition inside `group`
 
-Those limits are deliberate: Megabat aims to stay composable and predictable for integrators.
+Those limits are deliberate: Iruka aims to stay composable and predictable for integrators.
 
 ## How to choose the right condition type
 

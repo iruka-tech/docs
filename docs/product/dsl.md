@@ -1,6 +1,6 @@
 # Writing Signals
 
-This page shows how to write signal payloads that the Megabat backend accepts today.
+This page shows how to write signal payloads that the Iruka backend accepts today.
 
 Every example on this page follows the public request schema used by `POST /api/v1/signals`.
 
@@ -256,7 +256,7 @@ For ERC-20 transfers, common decoded filter fields include:
 
 For `count`, `field` is optional.
 
-Megabat can track gross inbound or outbound volume this way. Netting inflow minus outflow for the same address is not exposed as a single raw-events primitive today.
+Iruka can track gross inbound or outbound volume this way. Netting inflow minus outflow for the same address is not exposed as a single raw-events primitive today.
 
 ## Raw-events example: swaps
 

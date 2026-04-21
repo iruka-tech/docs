@@ -1,10 +1,10 @@
-# Megabat Docs
+# Iruka Docs
 
-Private documentation repository for Megabat.
+Documentation repository for Iruka.
 
 ## Purpose
 
-This repo separates documentation from the backend and web app repositories so it can be hosted independently at a future docs domain such as `docs.megabat.io` while the product repos remain private.
+This repo separates documentation from the backend and web app repositories so it can be hosted independently at `docs.iruka.tech` while the product repos stay decoupled.
 
 ## Local development
 
@@ -22,4 +22,4 @@ pnpm docs:preview
 
 ## Hosting
 
-Recommended production target: a third-party static host with private project controls and a custom domain such as `docs.megabat.io` once the domain is available.
+Recommended production target: Vercel or another static host with a custom domain such as `docs.iruka.tech`.

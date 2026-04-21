@@ -1,12 +1,12 @@
-# Megabat for Integrators
+# Iruka for Integrators
 
-Megabat is a monitoring backend for onchain state and event-driven alerts.
+Iruka is a monitoring backend for onchain state and event-driven alerts.
 
-If you are building wallets, dashboards, automation, portfolio tooling, or internal ops workflows, Megabat helps you define **signals** that watch blockchain activity and notify your systems when conditions are met.
+If you are building wallets, dashboards, automation, portfolio tooling, or internal ops workflows, Iruka helps you define **signals** that watch blockchain activity and notify your systems when conditions are met.
 
-## What Megabat does
+## What Iruka does
 
-Megabat lets you:
+Iruka lets you:
 
 - watch **current state** such as balances, vault positions, or protocol-specific fields
 - detect **changes over time** such as a position dropping by 10% over 1 hour
@@ -18,8 +18,8 @@ Megabat lets you:
 
 If you are new, read in this order:
 
-1. **Getting Started** — how to connect to your Megabat environment, choose auth, and make your first API call
-2. **What You Can Build** — the product model, supported condition types, and where Megabat fits well
+1. **Getting Started** — how to connect to your Iruka environment, choose auth, and make your first API call
+2. **What You Can Build** — the product model, supported condition types, and where Iruka fits well
 3. **Writing Signals** — the request shape and concrete examples you can send today
 4. **Auth** — API keys, SIWE sessions, and protected routes
 5. **API Reference** — endpoints, payloads, and response behavior
@@ -33,9 +33,9 @@ A signal is a saved rule made of:
 - a **window** — the time range used for evaluation
 - a **delivery target** — a webhook URL or managed Telegram delivery
 
-## Where Megabat is strongest today
+## Where Iruka is strongest today
 
-Megabat is especially useful when you want to monitor:
+Iruka is especially useful when you want to monitor:
 
 - protocol positions and market state
 - token and vault activity
@@ -46,5 +46,5 @@ Megabat is especially useful when you want to monitor:
 ## Where to go next
 
 - Read **Getting Started** if you want to make your first real integration call
-- Read **What You Can Build** if you want to decide whether Megabat fits your use case
+- Read **What You Can Build** if you want to decide whether Iruka fits your use case
 - Read **Writing Signals** if you already know you want to integrate

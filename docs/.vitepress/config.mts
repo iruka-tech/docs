@@ -1,20 +1,20 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'Megabat Docs',
-  description: 'Product, backend, and integration documentation for Megabat.',
+  title: 'Iruka Docs',
+  description: 'Product, backend, and integration documentation for Iruka.',
   cleanUrls: true,
   lastUpdated: true,
   themeConfig: {
     nav: [
       { text: 'Docs', link: '/' },
-      { text: 'GitHub', link: 'https://github.com/megabat-ai' },
+      { text: 'GitHub', link: 'https://github.com/iruka-tech' },
     ],
     sidebar: [
       {
         text: 'Overview',
         items: [
-          { text: 'Megabat for Integrators', link: '/' },
+          { text: 'Iruka for Integrators', link: '/' },
         ],
       },
       {
@@ -47,11 +47,11 @@ export default defineConfig({
       },
     ],
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/megabat-ai' },
+      { icon: 'github', link: 'https://github.com/iruka-tech' },
     ],
     footer: {
-      message: 'Private documentation repository for Megabat.',
-      copyright: `Copyright © ${new Date().getFullYear()} Megabat`,
+      message: 'Private documentation repository for Iruka.',
+      copyright: `Copyright © ${new Date().getFullYear()} Iruka`,
     },
   },
 })

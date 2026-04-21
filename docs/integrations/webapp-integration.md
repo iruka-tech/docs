@@ -1,10 +1,10 @@
 # Webapp Integration
 
-This page is for teams building a frontend on top of Megabat.
+This page is for teams building a frontend on top of Iruka.
 
 The key idea is:
 
-- Megabat owns signal evaluation, auth, and delivery behavior
+- Iruka owns signal evaluation, auth, and delivery behavior
 - your web app owns the user experience
 
 That keeps the backend consistent while letting you build your own product surface.
@@ -13,10 +13,10 @@ That keeps the backend consistent while letting you build your own product surfa
 
 Use this split:
 
-- **Megabat backend** — signals, auth, sessions, API keys, history, delivery integration
+- **Iruka backend** — signals, auth, sessions, API keys, history, delivery integration
 - **Your web app** — dashboards, forms, signal builders, account UX, team workflows
 
-Your frontend can call Megabat:
+Your frontend can call Iruka:
 
 - directly from the browser using SIWE-backed sessions
 - through a thin backend-for-frontend if you need composition or extra policy checks
@@ -28,8 +28,8 @@ Recommended sequence:
 1. call `POST /api/v1/auth/siwe/nonce`
 2. sign the SIWE message in the wallet
 3. call `POST /api/v1/auth/siwe/verify`
-4. let Megabat own the session cookie
-5. call protected Megabat routes from the web app
+4. let Iruka own the session cookie
+5. call protected Iruka routes from the web app
 
 This keeps identity and signal ownership in one place.
 
@@ -43,7 +43,7 @@ For server-side or machine integrations:
 
 ## Typical frontend responsibilities
 
-A frontend on top of Megabat usually handles:
+A frontend on top of Iruka usually handles:
 
 - listing signals
 - creating and editing signal definitions
@@ -52,9 +52,9 @@ A frontend on top of Megabat usually handles:
 - Telegram link UX
 - previews or simulation workflows
 
-## Typical backend responsibilities inside Megabat
+## Typical backend responsibilities inside Iruka
 
-Megabat should remain the source of truth for:
+Iruka should remain the source of truth for:
 
 - signal ownership
 - auth sessions
@@ -77,12 +77,12 @@ The important principle is that the BFF should not redefine the signal engine co
 
 ## Telegram integration from a web app
 
-For a web app, prefer the Megabat-native Telegram endpoints:
+For a web app, prefer the Iruka-native Telegram endpoints:
 
 - `GET /api/v1/me/integrations/telegram`
 - `POST /api/v1/me/integrations/telegram/link`
 
-This keeps Telegram account linking inside the same Megabat account model used for signals.
+This keeps Telegram account linking inside the same Iruka account model used for signals.
 
 ## Delivery choice in product UX
 

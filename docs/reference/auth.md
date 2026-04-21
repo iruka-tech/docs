@@ -1,6 +1,6 @@
 # Auth
 
-Megabat supports two authentication modes:
+Iruka supports two authentication modes:
 
 - **API keys** for server-to-server integrations
 - **SIWE-backed browser sessions** for interactive web applications
@@ -44,14 +44,14 @@ Response shape:
 {
   "user_id": "550e8400-e29b-41d4-a716-446655440000",
   "api_key_id": "2e4d1e12-3a0d-4b0c-9b54-7a1f4d8c3ed1",
-  "api_key": "megabat_..."
+  "api_key": "iruka_..."
 }
 ```
 
 Use the key on protected routes as:
 
 ```http
-X-API-Key: megabat_...
+X-API-Key: iruka_...
 ```
 
 ## SIWE browser sessions
@@ -71,8 +71,8 @@ Example response:
   "provider": "wallet",
   "nonce": "abc123...",
   "expires_at": "2026-03-17T08:10:00.000Z",
-  "domain": "megabat.example.com",
-  "uri": "https://megabat.example.com"
+  "domain": "iruka.example.com",
+  "uri": "https://iruka.example.com"
 }
 ```
 
@@ -87,13 +87,13 @@ Request body:
 
 ```json
 {
-  "message": "megabat.example.com wants you to sign in with your Ethereum account: ...",
+  "message": "iruka.example.com wants you to sign in with your Ethereum account: ...",
   "signature": "0x...",
   "name": "Acme Alerts"
 }
 ```
 
-Megabat responds with both a session cookie and a session token.
+Iruka responds with both a session cookie and a session token.
 
 Example response:
 
@@ -101,7 +101,7 @@ Example response:
 {
   "user_id": "550e8400-e29b-41d4-a716-446655440000",
   "session_id": "2e4d1e12-3a0d-4b0c-9b54-7a1f4d8c3ed1",
-  "session_token": "megabat_session_...",
+  "session_token": "iruka_session_...",
   "expires_at": "2026-04-16T08:00:00.000Z",
   "created": true,
   "auth_method": "session",
@@ -115,7 +115,7 @@ Example response:
 You can then authenticate with either:
 
 - the `HttpOnly` cookie
-- `Authorization: Bearer megabat_session_...`
+- `Authorization: Bearer iruka_session_...`
 
 ## Fetch the current profile
 
@@ -162,9 +162,9 @@ Use **SIWE sessions** if:
 
 - you have a wallet-connected frontend
 - users should manage their own signals interactively
-- you want the web app to act as the main console on top of Megabat
+- you want the web app to act as the main console on top of Iruka
 
 ## What to read next
 
 - Read **API Reference** for protected endpoint behavior
-- Read **Webapp Integration** if you are building a frontend on top of Megabat
+- Read **Webapp Integration** if you are building a frontend on top of Iruka
