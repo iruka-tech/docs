@@ -51,6 +51,7 @@ A frontend on top of Iruka usually handles:
 - showing notification history
 - Telegram link UX
 - previews or simulation workflows
+- external-trigger controls when your product lets users connect upstream event sources
 
 ## Typical backend responsibilities inside Iruka
 

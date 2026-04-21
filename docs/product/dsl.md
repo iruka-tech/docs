@@ -12,6 +12,7 @@ A create request looks like this:
 {
   "name": "Human-readable signal name",
   "definition": {
+    "trigger": { "type": "schedule" },
     "scope": {
       "chains": [1],
       "protocol": "morpho",
@@ -59,6 +60,27 @@ A signal must define a root window:
 ```
 
 Per-condition window overrides are also supported on condition objects.
+
+## Trigger mode
+
+Signals can wake up in two ways:
+
+- `schedule` — the default polling flow
+- `input` — an authenticated external caller wakes the signal immediately
+
+Scheduled signals should set:
+
+```json
+{ "trigger": { "type": "schedule" } }
+```
+
+Input-triggered signals should set:
+
+```json
+{ "trigger": { "type": "input" } }
+```
+
+Use input triggers when your own backend, indexer, webhook consumer, or bot already knows when something interesting happened and you want Iruka to run the normal signal evaluation and delivery flow immediately.
 
 ## Threshold example
 

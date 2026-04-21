@@ -36,6 +36,7 @@ export default defineConfig({
         items: [
           { text: 'Auth', link: '/reference/auth' },
           { text: 'API Reference', link: '/reference/api' },
+          { text: 'External Triggers', link: '/reference/external-triggers' },
         ],
       },
       {

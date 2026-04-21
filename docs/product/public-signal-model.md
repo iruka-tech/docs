@@ -11,11 +11,12 @@ Iruka evaluates saved **signals**.
 A signal is a rule that says:
 
 - what to watch
+- how the signal should wake up
 - over what time window
 - which conditions must be met
 - where alerts should be delivered
 
-Iruka then reevaluates that rule and emits notifications when it matches.
+Iruka then evaluates that rule and emits notifications when it matches.
 
 ## The five condition types
 
@@ -118,6 +119,15 @@ Iruka is a strong fit when you need:
 ## Delivery options
 
 A signal must define one delivery path.
+
+## Trigger modes
+
+A signal can be driven by either:
+
+- **Scheduled polling** — Iruka wakes the signal on its normal schedule
+- **External input** — your own authenticated caller wakes the signal through `POST /api/v1/signals/:id/trigger`
+
+Use external input when you already have an upstream event source and want Iruka to handle evaluation, repeat policy, history, and delivery after that event happens.
 
 ### Custom webhook
 

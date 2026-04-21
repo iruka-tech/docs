@@ -36,6 +36,7 @@ Use the environment URL provided to your team.
 | PATCH | `/api/v1/signals/:id/toggle` | Toggle active status |
 | DELETE | `/api/v1/signals/:id` | Delete a signal |
 | GET | `/api/v1/signals/:id/history` | Evaluation and notification history |
+| POST | `/api/v1/signals/:id/trigger` | Fire an input-triggered signal immediately |
 | POST | `/api/v1/simulate/:id/simulate` | Simulate a signal over a time range |
 | POST | `/api/v1/simulate/:id/first-trigger` | Find the first matching point in a range |
 
@@ -130,6 +131,16 @@ Response:
 - includes normalized `repeat_policy`
 - includes inferred `delivery` when relevant
 
+Input-triggered signals should include:
+
+```json
+"definition": {
+  "trigger": { "type": "input" }
+}
+```
+
+Those signals can then be fired immediately through `POST /api/v1/signals/:id/trigger`.
+
 ## List and fetch signals
 
 ### `GET /api/v1/signals`
@@ -189,6 +200,17 @@ For group results:
 - generic tracked-value groups return `matchedTargets`
 
 ## Simulation
+
+### `POST /api/v1/signals/:id/trigger`
+
+Use this to fire an input-triggered signal immediately.
+
+The request body can include:
+
+- `idempotency_key` — optional dedupe key for the queued job
+- `payload` — optional arbitrary JSON that Iruka includes in the outgoing notification as `trigger_input.payload`
+
+Read **External Triggers** for the full setup and notification shape.
 
 ### `POST /api/v1/simulate/:id/simulate`
 
