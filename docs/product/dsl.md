@@ -1,17 +1,30 @@
 # Writing Signals
 
-This page focuses on the condition language used inside `definition.conditions[]`.
+This page is a **condition reference**.
 
-If you want the full signal envelope first, read **The `definition` Layer** and **API Reference**.
+It explains the objects that belong inside:
 
-## Signal layering
+```json
+{
+  "definition": {
+    "conditions": [
+      { "type": "..." }
+    ]
+  }
+}
+```
+
+If you want the full signal shape first, read **API Reference**.
+If you want the structure of `definition` first, read **The `definition` Object**.
+
+## Before the condition examples
 
 A full signal has two layers:
 
 - outer envelope: `version`, `name`, `triggers`, `delivery`, `metadata`
-- query logic: `definition`
+- query layer: `definition`
 
-Condition examples on this page belong inside:
+This page covers only the condition objects that go inside:
 
 ```json
 {
@@ -42,13 +55,15 @@ Iruka currently supports these public condition types:
 - `aggregate`
 - `raw-events`
 
-## 1. Threshold
+---
 
-Definition:
+## 1. `threshold`
+
+### What it means
 
 A threshold condition compares one evaluated value against a target.
 
-Example:
+### Condition object
 
 ```json
 {
@@ -62,20 +77,42 @@ Example:
 }
 ```
 
-Rules:
+### Where it lives
+
+```json
+{
+  "definition": {
+    "conditions": [
+      {
+        "type": "threshold",
+        "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+        "chain_id": 1,
+        "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "address": "0x1111111111111111111111111111111111111111",
+        "operator": ">",
+        "value": "1000000000000000000"
+      }
+    ]
+  }
+}
+```
+
+### Rules
 
 - preferred input is `source`
 - compatibility inputs `metric` and `state_ref` are still accepted
 - `operator` must be one of `>`, `<`, `>=`, `<=`, `==`, `!=`
 - `value` can be a number or numeric string
 
-## 2. Change
+---
 
-Definition:
+## 2. `change`
+
+### What it means
 
 A change condition checks movement over time instead of only the current value.
 
-Example:
+### Condition object
 
 ```json
 {
@@ -90,6 +127,29 @@ Example:
 }
 ```
 
+### Where it lives
+
+```json
+{
+  "definition": {
+    "conditions": [
+      {
+        "type": "change",
+        "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+        "direction": "decrease",
+        "by": { "percent": 10 },
+        "window": { "duration": "24h" },
+        "chain_id": 1,
+        "market_id": "0xMarket",
+        "address": "0xUser"
+      }
+    ]
+  }
+}
+```
+
+### Rules
+
 Supported directions:
 
 - `increase`
@@ -101,13 +161,17 @@ Supported directions:
 - `{ "percent": 10 }`
 - `{ "absolute": "1000000" }`
 
-## 3. Group
+---
 
-Definition:
+## 3. `group`
+
+### What it means
 
 A group condition applies the same inner test across many tracked targets and checks how many matched.
 
-Address-group example:
+### Condition object
+
+Address-group form:
 
 ```json
 {
@@ -135,7 +199,7 @@ Address-group example:
 }
 ```
 
-Tracked-value example:
+Tracked-value form:
 
 ```json
 {
@@ -162,19 +226,48 @@ Tracked-value example:
 }
 ```
 
-Rules:
+### Where it lives
+
+```json
+{
+  "definition": {
+    "conditions": [
+      {
+        "type": "group",
+        "addresses": ["0x1", "0x2", "0x3"],
+        "logic": "AND",
+        "requirement": { "count": 2, "of": 3 },
+        "conditions": [
+          {
+            "type": "threshold",
+            "metric": "Morpho.Position.supplyShares",
+            "chain_id": 1,
+            "market_id": "0xMarket",
+            "operator": ">",
+            "value": "1000000000000000000"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Rules
 
 - set exactly one of `addresses` or `tracked`
 - generic tracked groups are currently limited to event-style inner sources
 - response/history payloads may include `matchedTargets` for tracked groups
 
-## 4. Aggregate
+---
 
-Definition:
+## 4. `aggregate`
+
+### What it means
 
 An aggregate condition reduces a scoped set to one combined number.
 
-Example:
+### Condition object
 
 ```json
 {
@@ -188,6 +281,33 @@ Example:
 }
 ```
 
+### Where it lives
+
+```json
+{
+  "definition": {
+    "scope": {
+      "chains": [1],
+      "protocol": "morpho",
+      "addresses": ["0x1", "0x2"]
+    },
+    "conditions": [
+      {
+        "type": "aggregate",
+        "aggregation": "sum",
+        "metric": "Morpho.Position.supplyShares",
+        "chain_id": 1,
+        "market_id": "0xMarket",
+        "operator": ">",
+        "value": "5000000000000000000"
+      }
+    ]
+  }
+}
+```
+
+### Rules
+
 Supported aggregations:
 
 - `sum`
@@ -198,13 +318,15 @@ Supported aggregations:
 
 What gets aggregated depends on the surrounding signal scope and source family.
 
-## 5. Raw events
+---
 
-Definition:
+## 5. `raw-events`
+
+### What it means
 
 A raw-events condition scans decoded events over a rolling window.
 
-Example:
+### Condition object
 
 ```json
 {
@@ -225,9 +347,37 @@ Example:
 }
 ```
 
+### Where it lives
+
+```json
+{
+  "definition": {
+    "conditions": [
+      {
+        "type": "raw-events",
+        "aggregation": "sum",
+        "field": "value",
+        "operator": ">",
+        "value": 1000000000000000000000,
+        "chain_id": 1,
+        "window": { "duration": "1h" },
+        "event": {
+          "kind": "erc20_transfer",
+          "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+        }
+      }
+    ]
+  }
+}
+```
+
+### Rules
+
 This is the right choice when event activity is the source of truth.
 
-## Common pattern: full `definition`
+---
+
+## Full `definition` example
 
 ```json
 {
@@ -270,6 +420,6 @@ Those belong to the outer signal envelope.
 
 ## What to read next
 
-- Read **The `definition` Layer** for `scope`, `window`, `logic`, and `conditions`
+- Read **The `definition` Object** for `scope`, `window`, `logic`, and `conditions`
 - Read **API Reference** for the full create-signal request shape
 - Read **External Triggers** for externally triggered signals
