@@ -1,22 +1,28 @@
-# Signal Model
+# Signal
 
-This page gives the big picture.
+Start here.
 
-Read this first if you want the simplest mental model for how an Iruka signal is structured.
+This page explains what a signal is and what the top-level signal object contains.
 
-## Core idea
+> [!NOTE]
+> This page documents the **target signal schema**.
+> The schema already reserves `schedule`, `external`, and `iruka_signal` trigger types.
+> Not every trigger execution path is live yet. In particular, **external input is not enabled yet**.
 
-Iruka evaluates saved **signals**.
+## What a signal is
 
-A signal is composed of:
+A signal is a saved monitoring rule.
 
-- basic info like `version` and `name`
-- rules for how it should be triggered
-- a `definition` query that describes what to evaluate
-- delivery settings
-- metadata like description and repeat policy
+A signal has five top-level parts:
 
-## Signal shape at a glance
+- `version`
+- `name`
+- `triggers`
+- `definition`
+- `delivery`
+- `metadata`
+
+## Top-level shape
 
 ```json
 {
@@ -38,6 +44,7 @@ A signal is composed of:
       "addresses": ["0x1111111111111111111111111111111111111111"]
     },
     "window": { "duration": "1h" },
+    "logic": "AND",
     "conditions": [
       {
         "type": "threshold",
@@ -60,17 +67,37 @@ A signal is composed of:
 }
 ```
 
-## Trigger modes
+## Top-level fields
 
-A signal can have one or more trigger entries.
+### `version`
 
-For now, cap `triggers` at **3 entries max**.
+`version` is the schema version for the outer signal shape.
 
-### Schedule
+```json
+{ "version": "1" }
+```
 
-Use `schedule` when Iruka should wake the signal on its own.
+### `name`
 
-Relative schedule example:
+`name` is the human-readable signal name.
+
+```json
+{ "name": "Large supplier position" }
+```
+
+### `triggers`
+
+`triggers` defines how the signal wakes up.
+
+It is an array so one signal can have more than one wake-up path.
+
+For now, keep `triggers` to **3 entries max**.
+
+#### Schedule trigger
+
+Use a schedule when Iruka should wake the signal on its own.
+
+Relative schedule:
 
 ```json
 {
@@ -82,7 +109,7 @@ Relative schedule example:
 }
 ```
 
-Absolute schedule example:
+Absolute schedule:
 
 ```json
 {
@@ -94,11 +121,9 @@ Absolute schedule example:
 }
 ```
 
-Absolute schedules should be interpreted in UTC by default.
+Cron expressions are interpreted in UTC.
 
-### External
-
-Use `external` when your own authenticated caller should wake the signal through `POST /api/v1/signals/:id/trigger`.
+#### External trigger
 
 ```json
 {
@@ -106,9 +131,11 @@ Use `external` when your own authenticated caller should wake the signal through
 }
 ```
 
-### `iruka_signal`
+This trigger type exists in the **target schema** for cases where your own authenticated system should wake the signal.
 
-Use `iruka_signal` when another Iruka signal should wake this signal.
+**Current status:** the schema supports this shape, but the public external input flow is not enabled yet.
+
+#### Signal-to-signal trigger
 
 ```json
 {
@@ -117,13 +144,26 @@ Use `iruka_signal` when another Iruka signal should wake this signal.
 }
 ```
 
-If a user already knows another signal id, they can add this trigger. When the linked signal fires, it should wake this signal too.
+Use this when another Iruka signal should wake this signal.
 
-## Delivery
+### `definition`
 
-Delivery is separate from trigger semantics.
+`definition` is the query that Iruka evaluates.
 
-Current public delivery model:
+It contains:
+
+- `scope`
+- `window`
+- `logic`
+- `conditions`
+
+Read **Definition** next for the details.
+
+### `delivery`
+
+`delivery` defines where notifications go.
+
+Current public delivery shape:
 
 ```json
 {
@@ -135,37 +175,29 @@ Current public delivery model:
 
 Telegram is the only public delivery target documented here today.
 
-## Metadata
+### `metadata`
 
-Current metadata fields:
-
-- `description`
-- `repeat_policy`
-
-Example:
+`metadata` holds non-core product/runtime fields.
 
 ```json
 {
   "metadata": {
     "description": "Optional",
     "repeat_policy": {
-      "mode": "post_first_alert_snooze",
-      "snooze_minutes": 1440
+      "mode": "cooldown"
     }
   }
 }
 ```
 
-## `definition`
+Supported repeat policies:
 
-`definition` is the query part of the signal.
+- `cooldown`
+- `post_first_alert_snooze`
+- `until_resolved`
 
-It contains:
+## What to read next
 
-- `scope`
-- `window`
-- `logic`
-- `conditions`
-
-Read **Create a Signal** next for the top-level fields in more detail.
-Then read **The `definition` Object** for the internals of `definition`.
+- Read **Definition** for what belongs inside `definition`
+- Read **Examples** for concrete condition examples
+- Read **API Reference** for routes and payloads

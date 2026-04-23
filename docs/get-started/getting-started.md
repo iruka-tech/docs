@@ -58,7 +58,7 @@ Read **Auth** for the full SIWE flow.
 
 ## Step 3: create your first signal
 
-This example creates a threshold signal that watches a Morpho position and delivers alerts to Telegram.
+This example creates a scheduled threshold signal that watches a Morpho position and delivers alerts to Telegram.
 
 ```bash
 curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
@@ -105,63 +105,7 @@ curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
   }'
 ```
 
-## Step 4: try an externally triggered signal
-
-This example creates a signal that can be fired by your own system.
-
-```bash
-curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: <your_api_key>" \
-  -d '{
-    "version": "1",
-    "name": "External event alert",
-    "triggers": [
-      { "type": "external" }
-    ],
-    "definition": {
-      "scope": { "chains": [1], "protocol": "all" },
-      "window": { "duration": "1h" },
-      "conditions": [
-        {
-          "type": "threshold",
-          "source": {
-            "kind": "raw_event",
-            "aggregation": "count",
-            "chain_id": 1,
-            "event": {
-              "kind": "erc20_transfer",
-              "contract_addresses": ["0x3333333333333333333333333333333333333333"]
-            }
-          },
-          "operator": ">",
-          "value": 25
-        }
-      ]
-    },
-    "delivery": [
-      { "type": "telegram" }
-    ]
-  }'
-```
-
-Fire it with:
-
-```bash
-curl -sS -X POST <your_iruka_base_url>/api/v1/signals/<signal_id>/trigger \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: <your_api_key>" \
-  -d '{
-    "idempotency_key": "chain1:0xTx:7",
-    "payload": {
-      "chain_id": 1,
-      "transaction_hash": "0x...",
-      "log_index": 7
-    }
-  }'
-```
-
-## Step 5: inspect what you created
+## Step 4: inspect what you created
 
 Useful follow-up routes:
 
@@ -178,8 +122,8 @@ curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id>/history \
 
 ## What to read next
 
-- **Signal Model** for the capability model and boundaries
-- **The `definition` Layer** for the query structure
+- **Signal** for the target signal schema
+- **Definition** for the query structure
 - **Examples** for condition examples
 - **Auth** for API keys and SIWE sessions
 - **API Reference** for routes and payloads

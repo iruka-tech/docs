@@ -36,7 +36,7 @@ Use the environment URL provided to your team.
 | PATCH | `/api/v1/signals/:id/toggle` | Toggle active status |
 | DELETE | `/api/v1/signals/:id` | Delete a signal |
 | GET | `/api/v1/signals/:id/history` | Evaluation and notification history |
-| POST | `/api/v1/signals/:id/trigger` | Fire an external-triggered signal immediately |
+| POST | `/api/v1/signals/:id/trigger` | Planned external-input route for future `external` trigger support |
 | POST | `/api/v1/simulate/:id/simulate` | Simulate a signal over a time range |
 | POST | `/api/v1/simulate/:id/first-trigger` | Find the first matching point in a range |
 
@@ -180,6 +180,9 @@ Absolute schedule expressions should be interpreted in UTC by default.
 }
 ```
 
+This shape is part of the target schema.
+Public external input is not enabled yet.
+
 ### Signal-to-signal trigger
 
 ```json
@@ -288,14 +291,13 @@ For group results:
 
 ### `POST /api/v1/signals/:id/trigger`
 
-Use this to fire a signal that includes an `external` trigger entry.
+This route is part of the target model for future `external` trigger support.
 
-The request body can include:
+It is **not a live public integration path yet**.
+Do not build against it yet.
 
-- `idempotency_key` — optional dedupe key for the queued job
-- `payload` — optional arbitrary JSON that Iruka includes in the outgoing notification as `trigger_input.payload`
-
-Read **External Triggers** for the full setup and notification shape.
+When this ships, it is expected to wake a signal that includes an `external` trigger entry.
+Until then, use scheduled signals in real integrations.
 
 ## Simulation
 
@@ -325,7 +327,7 @@ Common response patterns:
 
 ## What to read next
 
-- Read **The `definition` Layer** for the query part of the signal
-- Read **Writing Signals** for condition examples
-- Read **External Triggers** if you want externally triggered wake-up paths
+- Read **Definition** for the query part of the signal
+- Read **Examples** for condition examples
+- Read **Signal** for the top-level signal shape
 - Read **Telegram Delivery** if you want managed operator notifications

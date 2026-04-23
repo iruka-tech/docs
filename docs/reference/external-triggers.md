@@ -1,138 +1,42 @@
 # External Triggers
 
-External triggers let your own system wake an Iruka signal immediately.
+> [!NOTE]
+> This page describes a **target-schema trigger type**, not a live public integration flow.
+> The signal schema already reserves `{"type":"external"}`.
+> Public external input is **not enabled yet**.
 
-This is the right model when an upstream event already happened somewhere else and you want Iruka to handle the normal signal evaluation, repeat policy, history, and notification flow.
+## What this means today
 
-## How it works
-
-```text
-external event happens
-  -> your system POSTs /api/v1/signals/:id/trigger
-  -> Iruka queues the signal immediately
-  -> worker evaluates the signal
-  -> Iruka sends the normal notification payload
-```
-
-Your caller can be:
-
-- your own indexer
-- a webhook consumer
-- a backend job
-- a bot
-- a test script
-
-## When to use it
-
-Use external triggers when:
-
-- you already know exactly when something interesting happened
-- polling would be wasteful or slow
-- you want Iruka delivery and repeat-policy behavior on top of your own event source
-- you want to attach event payload context to the outgoing notification
-
-Use scheduled signals when Iruka should keep checking state on its own over time.
-
-## Create an externally triggered signal
-
-Create the signal through `POST /api/v1/signals` and include an `external` trigger entry.
+You can design around `external` as part of the target signal model.
 
 ```json
 {
-  "version": "1",
-  "name": "External event alert",
-  "triggers": [
-    { "type": "external" }
-  ],
-  "definition": {
-    "scope": { "chains": [1], "markets": ["0xMarket"] },
-    "window": { "duration": "1h" },
-    "conditions": [
-      {
-        "type": "threshold",
-        "source": { "kind": "alias", "name": "Morpho.Market.utilization" },
-        "operator": ">",
-        "value": 0.9,
-        "chain_id": 1,
-        "market_id": "0xMarket"
-      }
-    ]
-  },
-  "delivery": [
-    { "type": "telegram" }
-  ],
-  "metadata": {
-    "description": "Optional",
-    "repeat_policy": { "mode": "until_resolved" }
-  }
+  "type": "external"
 }
 ```
 
-The signal still uses the normal condition engine. The only difference is how it wakes up.
+That tells readers and integrators that Iruka intends to support a signal which is woken by an authenticated upstream system instead of a schedule.
 
-## Fire the signal
+## What is not live yet
 
-```http
-POST /api/v1/signals/:id/trigger
-X-API-Key: iruka_...
-Content-Type: application/json
+The public docs do **not** currently promise:
 
-{
-  "idempotency_key": "chain1:0xTx:7",
-  "payload": {
-    "chain_id": 1,
-    "transaction_hash": "0x...",
-    "log_index": 7,
-    "event": "Transfer",
-    "from": "0x...",
-    "to": "0x...",
-    "value": "1000000"
-  }
-}
-```
+- a live `POST /api/v1/signals/:id/trigger` flow
+- a stable trigger payload contract
+- production-ready external event ingestion
 
-## Request fields
+Until that ships, use scheduled signals in real integrations.
 
-### `idempotency_key`
+## Why keep it in the schema docs
 
-Optional.
+Because it changes how the signal model is understood:
 
-If provided, Iruka uses it as the queue job id while that job exists. This helps avoid duplicate trigger submissions for the same upstream event.
-
-### `payload`
-
-Optional arbitrary JSON.
-
-Iruka includes it in the outgoing notification as `trigger_input.payload`, so your downstream consumer can see the upstream event context.
-
-## Notification shape
-
-Example notification fields added by an external trigger:
-
-```json
-{
-  "trigger_input": {
-    "source": "external",
-    "triggered_at": "2026-04-21T00:00:00.000Z",
-    "idempotency_key": "chain1:0xTx:7",
-    "payload": {
-      "chain_id": 1,
-      "transaction_hash": "0x...",
-      "log_index": 7
-    }
-  }
-}
-```
-
-## Operational notes
-
-- external triggers still require normal API authentication
-- the worker process must be running because the API queues a job and the worker delivers it
-- scheduled signals are unaffected
-- this feature is typically paired with your own premium or entitlement checks before exposing it to end users
+- `triggers` is an array because a signal can have more than one wake-up path
+- not every trigger is a scheduler
+- delivery stays separate from triggering
 
 ## What to read next
 
-- Read **The `definition` Layer** for the query part of the signal
-- Read **API Reference** for route behavior
-- Read **Webapp Integration** if your frontend needs to create or fire these signals
+- Read **Signal** for the top-level signal shape
+- Read **Definition** for the query structure
+- Read **API Reference** for currently available routes

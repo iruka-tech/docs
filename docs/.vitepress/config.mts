@@ -26,9 +26,8 @@ export default defineConfig({
       {
         text: 'Product Guide',
         items: [
-          { text: 'Signal Model', link: '/product/public-signal-model' },
-          { text: 'Create a Signal', link: '/product/create-a-signal' },
-          { text: 'The `definition` Object', link: '/product/definition' },
+          { text: 'Signal', link: '/product/public-signal-model' },
+          { text: 'Definition', link: '/product/definition' },
           { text: 'Examples', link: '/product/dsl' },
         ],
       },
@@ -37,7 +36,6 @@ export default defineConfig({
         items: [
           { text: 'Auth', link: '/reference/auth' },
           { text: 'API Reference', link: '/reference/api' },
-          { text: 'External Triggers', link: '/reference/external-triggers' },
         ],
       },
       {

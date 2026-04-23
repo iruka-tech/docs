@@ -1,8 +1,8 @@
-# The `definition` Object
+# Definition
 
 This page explains what goes inside `definition`.
 
-Read **Create a Signal** first if you want the top-level signal fields.
+Read **Signal** first if you want the full top-level signal shape.
 
 ## What `definition` contains
 
@@ -44,8 +44,6 @@ It contains:
 
 `scope` defines the broad search space.
 
-Example:
-
 ```json
 {
   "scope": {
@@ -63,13 +61,11 @@ Supported fields:
 - `addresses` — optional array of addresses to track
 - `protocol` — optional, currently `"morpho"` or `"all"`
 
-Use `scope` for broad narrowing. Do not put the actual threshold or event test here.
+Use `scope` for broad narrowing. Put the actual threshold or event test in `conditions`.
 
 ## `window`
 
 `window` defines the default time range for the whole definition.
-
-Example:
 
 ```json
 {
@@ -81,13 +77,10 @@ Some condition types can override `window` locally.
 
 ## `logic`
 
-`logic` controls how multiple condition results combine.
-
-Example:
+`logic` defines how multiple conditions combine.
 
 ```json
-{
-  "logic": "AND" }
+{ "logic": "AND" }
 ```
 
 Supported values:
@@ -95,51 +88,38 @@ Supported values:
 - `AND`
 - `OR`
 
+If omitted, Iruka should treat `AND` as the safe default.
+
 ## `conditions`
 
-`conditions` is the array of actual checks.
+`conditions` is the list of tests inside the definition.
 
-Example:
+Each condition checks one thing, such as:
+
+- current value above a threshold
+- value changed over time
+- grouped matches across many addresses
+- event count over a rolling window
+
+A threshold example belongs here, not at the top level.
 
 ```json
 {
   "conditions": [
     {
       "type": "threshold",
-      "source": { "kind": "alias", "name": "Morpho.Market.utilization" },
-      "operator": ">",
-      "value": 0.9,
+      "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
       "chain_id": 1,
-      "market_id": "0xMarket"
+      "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "address": "0x1111111111111111111111111111111111111111",
+      "operator": ">",
+      "value": "1000000000000000000"
     }
   ]
 }
 ```
 
-This is the key rule:
-
-- `scope` narrows where Iruka looks
-- `window` defines the time range
-- `logic` combines results
-- `conditions[]` holds the actual threshold, change, group, aggregate, and raw-events objects
-
-## Where condition examples belong
-
-When the docs show a condition example like `threshold`, `change`, or `group`, that JSON is a **condition object**.
-
-It belongs inside:
-
-```json
-{
-  "definition": {
-    "conditions": [
-      { "type": "threshold", "...": "condition fields here" }
-    ]
-  }
-}
-```
-
 ## What to read next
 
-- Read **Examples** for condition-by-condition examples
-- Read **API Reference** for routes and full request behavior
+- Read **Examples** for complete condition examples
+- Read **API Reference** for request and response details

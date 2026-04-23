@@ -50,7 +50,7 @@ A frontend on top of Iruka usually handles:
 - showing notification history
 - Telegram link UX
 - previews or simulation workflows
-- external-trigger controls when your product lets users connect upstream event sources
+- future external-trigger controls when your product later lets users connect upstream event sources
 
 ## Typical backend responsibilities inside Iruka
 
@@ -132,5 +132,5 @@ This gives you a cleaner builder split:
 
 - Read **Auth** for SIWE and API-key details
 - Read **API Reference** for route-level behavior
-- Read **The `definition` Layer** for the query part of the signal
+- Read **Definition** for the query part of the signal
 - Read **Telegram Delivery** if you want first-party operator notifications
