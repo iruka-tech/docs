@@ -4,13 +4,11 @@ This page explains what goes inside `definition`.
 
 Read **Create a Signal** first if you want the top-level signal fields.
 
-This page starts one level lower.
-
-## What `definition` owns
+## What `definition` contains
 
 `definition` is the query Iruka evaluates.
 
-It owns:
+It contains:
 
 - `scope`
 - `window`
@@ -41,8 +39,6 @@ It owns:
   ]
 }
 ```
-
-## Fields inside `definition`
 
 ## `scope`
 
@@ -142,18 +138,6 @@ It belongs inside:
   }
 }
 ```
-
-## What does not belong in `definition`
-
-These do **not** belong inside `definition`:
-
-- `version`
-- `name`
-- `triggers`
-- `delivery`
-- `metadata`
-
-Those live in the outer signal schema.
 
 ## What to read next
 

@@ -1,18 +1,16 @@
 # Create a Signal
 
-This page explains the **top-level signal schema**.
+This page explains the top-level signal fields.
 
-Read this page first if you want to understand the outer shape of a signal request.
+Read this page after **Signal Model**.
 
-This page is only about the highest-level fields.
+This page is about the outer signal object: the fields you send when you create a signal.
 
 If you want to understand what goes inside `definition`, read **The `definition` Object** next.
 
-## A signal has two layers
+## Top-level fields
 
-### 1. Outer signal schema
-
-The top-level signal owns:
+A signal request includes:
 
 - `version`
 - `name`
@@ -20,19 +18,6 @@ The top-level signal owns:
 - `definition`
 - `delivery`
 - `metadata`
-
-### 2. `definition`
-
-`definition` is the query layer.
-
-It owns:
-
-- `scope`
-- `window`
-- `logic`
-- `conditions`
-
-That split is the main mental model.
 
 ## Full top-level shape
 
@@ -78,8 +63,6 @@ That split is the main mental model.
   }
 }
 ```
-
-## Top-level fields
 
 ## `version`
 
@@ -216,9 +199,8 @@ Supported repeat policies:
 
 ## Reading order
 
-If you are learning Iruka step by step:
-
-1. **Create a Signal** — top-level signal fields
-2. **The `definition` Object** — what `definition` contains
-3. **Writing Signals** — condition-by-condition examples
-4. **API Reference** — routes and request/response behavior
+1. **Signal Model** — simple big picture
+2. **Create a Signal** — top-level signal fields
+3. **The `definition` Object** — what `definition` contains
+4. **Writing Signals** — condition-by-condition examples
+5. **API Reference** — routes and request behavior

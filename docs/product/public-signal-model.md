@@ -2,34 +2,21 @@
 
 This page gives the big picture.
 
-Read this before **Create a Signal** if you want to understand what an Iruka signal is conceptually.
+Read this first if you want the simplest mental model for how an Iruka signal is structured.
 
 ## Core idea
 
 Iruka evaluates saved **signals**.
 
-A signal has two layers:
+A signal is composed of:
 
-1. the outer envelope
-2. the `definition` query
+- basic info like `version` and `name`
+- rules for how it should be triggered
+- a `definition` query that describes what to evaluate
+- delivery settings
+- metadata like description and repeat policy
 
-The outer envelope says:
-
-- what the signal is called
-- how it wakes up
-- where alerts go
-- runtime metadata
-
-The `definition` says:
-
-- what to watch
-- over what window
-- which conditions must be met
-- how those conditions combine
-
-## Signal envelope
-
-Current public shape:
+## Signal shape at a glance
 
 ```json
 {
@@ -75,11 +62,11 @@ Current public shape:
 
 ## Trigger modes
 
-A signal can be driven by one or more trigger entries.
+A signal can have one or more trigger entries.
 
 For now, cap `triggers` at **3 entries max**.
 
-### 1. Schedule
+### Schedule
 
 Use `schedule` when Iruka should wake the signal on its own.
 
@@ -109,7 +96,7 @@ Absolute schedule example:
 
 Absolute schedules should be interpreted in UTC by default.
 
-### 2. External
+### External
 
 Use `external` when your own authenticated caller should wake the signal through `POST /api/v1/signals/:id/trigger`.
 
@@ -119,7 +106,7 @@ Use `external` when your own authenticated caller should wake the signal through
 }
 ```
 
-### 3. `iruka_signal`
+### `iruka_signal`
 
 Use `iruka_signal` when another Iruka signal should wake this signal.
 
@@ -169,38 +156,16 @@ Example:
 }
 ```
 
-## Condition types
+## `definition`
 
-Iruka currently supports five public condition types:
+`definition` is the query part of the signal.
 
-- `threshold`
-- `change`
-- `group`
-- `aggregate`
-- `raw-events`
+It contains:
 
-Those condition objects live inside `definition.conditions[]`.
+- `scope`
+- `window`
+- `logic`
+- `conditions`
 
-## Current boundaries
-
-Iruka is expressive, but it is not an arbitrary onchain programming language.
-
-Important current limits:
-
-- no arbitrary ABI-call DSL using raw function selectors and calldata
-- no general-purpose math expression language authored by end users
-- no public topic-level log query language as the primary API shape
-- `group` supports either legacy `addresses` or generic `tracked: { field, values }`
-- generic tracked groups are currently limited to event-style inner sources
-- aggregate conditions accept `source` with `metric` still accepted as compatibility sugar
-- `raw-events` is a top-level condition type; it is not exposed as a nested condition inside `group`
-
-## Reading order
-
-If you are learning Iruka step by step:
-
-1. **Signal Model** — high-level structure and capabilities
-2. **Create a Signal** — top-level signal fields
-3. **The `definition` Object** — what `definition` contains
-4. **Writing Signals** — condition-by-condition examples
-5. **API Reference** — routes and request behavior
+Read **Create a Signal** next for the top-level fields in more detail.
+Then read **The `definition` Object** for the internals of `definition`.
