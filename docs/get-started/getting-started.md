@@ -178,7 +178,7 @@ curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id>/history \
 
 ## What to read next
 
-- **What You Can Build** for the capability model and boundaries
+- **Signal Model** for the capability model and boundaries
 - **The `definition` Layer** for the query structure
 - **Writing Signals** for condition examples
 - **Auth** for API keys and SIWE sessions

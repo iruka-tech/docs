@@ -1,75 +1,23 @@
 # The `definition` Object
 
-This page explains the `definition` part of a signal.
+This page explains what goes inside `definition`.
 
-A full signal has two layers:
+Read **Create a Signal** first if you want the top-level signal fields.
 
-1. the **outer signal envelope**
-2. the **`definition` object**
+This page starts one level lower.
 
-The outer signal envelope owns:
+## What `definition` owns
 
-- `version`
-- `name`
-- `triggers`
-- `delivery`
-- `metadata`
+`definition` is the query Iruka evaluates.
 
-The `definition` object owns:
+It owns:
 
 - `scope`
 - `window`
 - `logic`
 - `conditions`
 
-## Full signal vs `definition`
-
-Full signal example:
-
-```json
-{
-  "version": "1",
-  "name": "Large supplier position",
-  "triggers": [
-    {
-      "type": "schedule",
-      "schedule": {
-        "kind": "interval",
-        "interval_seconds": 300
-      }
-    }
-  ],
-  "definition": {
-    "scope": {
-      "chains": [1],
-      "protocol": "morpho",
-      "addresses": ["0x1111111111111111111111111111111111111111"]
-    },
-    "window": { "duration": "1h" },
-    "logic": "AND",
-    "conditions": [
-      {
-        "type": "threshold",
-        "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
-        "chain_id": 1,
-        "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
-        "address": "0x1111111111111111111111111111111111111111",
-        "operator": ">",
-        "value": "1000000000000000000"
-      }
-    ]
-  },
-  "delivery": [
-    { "type": "telegram" }
-  ],
-  "metadata": {
-    "description": "Optional",
-    "repeat_policy": { "mode": "cooldown" }
-  }
-}
-```
-
-`definition` only:
+## `definition` example
 
 ```json
 {
@@ -94,11 +42,9 @@ Full signal example:
 }
 ```
 
-Everything inside `definition` is the query Iruka evaluates.
+## Fields inside `definition`
 
-## Structure inside `definition`
-
-## 1. `scope`
+## `scope`
 
 `scope` defines the broad search space.
 
@@ -123,7 +69,7 @@ Supported fields:
 
 Use `scope` for broad narrowing. Do not put the actual threshold or event test here.
 
-## 2. `window`
+## `window`
 
 `window` defines the default time range for the whole definition.
 
@@ -137,7 +83,7 @@ Example:
 
 Some condition types can override `window` locally.
 
-## 3. `logic`
+## `logic`
 
 `logic` controls how multiple condition results combine.
 
@@ -145,8 +91,7 @@ Example:
 
 ```json
 {
-  "logic": "AND"
-}
+  "logic": "AND" }
 ```
 
 Supported values:
@@ -154,7 +99,7 @@ Supported values:
 - `AND`
 - `OR`
 
-## 4. `conditions`
+## `conditions`
 
 `conditions` is the array of actual checks.
 
@@ -184,9 +129,9 @@ This is the key rule:
 
 ## Where condition examples belong
 
-When the docs show a condition example like `threshold`, `change`, or `group`, that JSON is a **condition object**, not a full signal.
+When the docs show a condition example like `threshold`, `change`, or `group`, that JSON is a **condition object**.
 
-That object belongs inside:
+It belongs inside:
 
 ```json
 {
@@ -208,21 +153,9 @@ These do **not** belong inside `definition`:
 - `delivery`
 - `metadata`
 
-Those live in the outer signal envelope.
-
-## Reading rule of thumb
-
-When you read a signal:
-
-- top level = signal envelope
-- `definition` = query logic
-- `definition.scope` = where to look
-- `definition.window` = time range
-- `definition.logic` = AND / OR combination
-- `definition.conditions[]` = actual checks
+Those live in the outer signal schema.
 
 ## What to read next
 
 - Read **Writing Signals** for condition-by-condition examples
-- Read **API Reference** for the full outer signal payload
-- Read **What You Can Build** for the product model and boundaries
+- Read **API Reference** for routes and full request behavior

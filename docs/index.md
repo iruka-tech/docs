@@ -20,7 +20,7 @@ Iruka lets you:
 If you are new, read in this order:
 
 1. **Getting Started** — how to connect to your Iruka environment, choose auth, and make your first API call
-2. **What You Can Build** — the product model, supported condition types, and where Iruka fits well
+2. **Signal Model** — the product model, supported condition types, and where Iruka fits well
 3. **The `definition` Layer** — what belongs inside `definition`
 4. **Writing Signals** — condition examples you can send today
 5. **API Reference** — endpoints, payloads, and response behavior
@@ -46,6 +46,6 @@ Iruka is especially useful when you want to monitor:
 ## Where to go next
 
 - Read **Getting Started** if you want to make your first real integration call
-- Read **What You Can Build** if you want to decide whether Iruka fits your use case
+- Read **Signal Model** if you want to decide whether Iruka fits your use case
 - Read **The `definition` Layer** if you want the clean split between envelope and query logic
 - Read **Writing Signals** if you already know you want to integrate
