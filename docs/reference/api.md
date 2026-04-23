@@ -268,19 +268,57 @@ Deletes the signal for the authenticated owner.
 
 ### `GET /api/v1/signals/:id/history`
 
+Use history to inspect evaluations, notification attempts, matched conditions, and delivery failures for one authenticated user's signal.
+
 Query parameters:
 
-- `limit` — max 500, default 100
-- `include_notifications=false` — skip notification records
+| Param | Default | Purpose |
+| --- | --- | --- |
+| `limit` | `100` | Page size for each returned list. Capped at `500`. |
+| `offset` | `0` | Shared default offset for evaluations and notifications. Capped at `100000`. |
+| `evaluation_offset` | `offset` | Offset for the evaluation timeline. Use this when paging evaluations independently. |
+| `notification_offset` | `offset` | Offset for the notification timeline. Use this when paging notifications independently. |
+| `include_notifications` | `true` | Set to `false` to omit notification records. |
+| `triggered` | unset | Filter evaluations by triggered state: `true` or `false`. |
+| `conclusive` | unset | Filter evaluations by conclusive state: `true` or `false`. |
+| `notification_success` | unset | Filter notifications by delivery success: `true` for 2xx/3xx webhook status, `false` for failed or missing status. |
+
+Evaluations and notifications are independent timelines. If you need stable pagination across both lists, prefer `evaluation_offset` and `notification_offset` instead of a shared `offset`.
 
 The response includes:
 
-- evaluation history
-- notification history
-- `condition_results`
-- `conditions_met`
+- `evaluations` — evaluation history, including `condition_results`, `conditions_met`, `logic`, `scope`, and `wake_context`
+- `notifications` — notification history, unless `include_notifications=false`
+- `count` — number of rows returned in this page
+- `pagination` — `limit`, current `offset`, and `next_offset` for evaluations and notifications
 
-This is useful for explainability and debugging integrations.
+Example response shape:
+
+```json
+{
+  "signal_id": "550e8400-e29b-41d4-a716-446655440000",
+  "evaluations": [],
+  "notifications": [],
+  "count": {
+    "evaluations": 0,
+    "notifications": 0
+  },
+  "pagination": {
+    "evaluations": {
+      "limit": 100,
+      "offset": 0,
+      "next_offset": null
+    },
+    "notifications": {
+      "limit": 100,
+      "offset": 0,
+      "next_offset": null
+    }
+  }
+}
+```
+
+This is useful for explainability and debugging integrations without direct database access.
 
 For group results:
 
