@@ -30,7 +30,6 @@ export default defineConfig({
           { text: 'Create a Signal', link: '/product/create-a-signal' },
           { text: 'The `definition` Object', link: '/product/definition' },
           { text: 'Examples', link: '/product/dsl' },
-          { text: 'Common Use Cases', link: '/product/use-cases' },
         ],
       },
       {
