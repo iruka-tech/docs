@@ -12,12 +12,10 @@ Choose managed Telegram delivery when:
 - you want a simple first-party notification path
 - you want Telegram-specific actions such as `Why` and snooze
 
-If your system already has its own messaging or automation layer, use a custom `webhook_url` instead.
-
 ## How it works
 
 1. a user connects their Telegram account to Iruka
-2. you create a signal with `delivery: { "provider": "telegram" }`
+2. you create a signal with `delivery: [{ "type": "telegram" }]`
 3. Iruka evaluates the signal
 4. when the rule matches, Iruka routes the alert through the delivery adapter
 5. the delivery adapter sends the Telegram message to the linked chat
@@ -28,11 +26,11 @@ Use this at signal creation time:
 
 ```json
 {
-  "delivery": { "provider": "telegram" }
+  "delivery": [
+    { "type": "telegram" }
+  ]
 }
 ```
-
-You do **not** need to supply the internal delivery webhook target yourself.
 
 ## Link status and linking endpoints
 
@@ -59,7 +57,7 @@ These are separate concepts.
 
 ### Repeat policy
 
-Controlled on the signal itself:
+Controlled on the signal through `metadata.repeat_policy`:
 
 - `cooldown`
 - `post_first_alert_snooze`
@@ -84,15 +82,6 @@ The delivery adapter verifies:
 - shared webhook secret
 
 This keeps the bridge trusted even when the delivery process is separate from the core API.
-
-## When not to use Telegram delivery
-
-Use a custom webhook instead if you need:
-
-- custom incident routing
-- Slack, Discord, PagerDuty, or your own notification fan-out
-- non-human automation triggers
-- complete control over the downstream payload contract
 
 ## What to read next
 

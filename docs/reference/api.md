@@ -36,7 +36,7 @@ Use the environment URL provided to your team.
 | PATCH | `/api/v1/signals/:id/toggle` | Toggle active status |
 | DELETE | `/api/v1/signals/:id` | Delete a signal |
 | GET | `/api/v1/signals/:id/history` | Evaluation and notification history |
-| POST | `/api/v1/signals/:id/trigger` | Fire an input-triggered signal immediately |
+| POST | `/api/v1/signals/:id/trigger` | Fire an external-triggered signal immediately |
 | POST | `/api/v1/simulate/:id/simulate` | Simulate a signal over a time range |
 | POST | `/api/v1/simulate/:id/first-trigger` | Find the first matching point in a range |
 
@@ -82,19 +82,31 @@ It is useful when you want your UI to present backend-native templates instead o
 
 ### `POST /api/v1/signals`
 
-This endpoint accepts the signal payload described in **Writing Signals**.
+This endpoint accepts the full signal envelope.
 
 A valid request must include:
 
+- `version`
 - `name`
+- `triggers`
 - `definition`
-- either `webhook_url` or `delivery`
+- `delivery`
 
-Example:
+Current outer shape:
 
 ```json
 {
+  "version": "1",
   "name": "High transfer count",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
   "definition": {
     "scope": {
       "chains": [1],
@@ -118,28 +130,103 @@ Example:
       }
     ]
   },
-  "webhook_url": "https://example.com/webhook",
-  "cooldown_minutes": 5,
-  "repeat_policy": { "mode": "cooldown" }
+  "delivery": [
+    { "type": "telegram" }
+  ],
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": { "mode": "cooldown" }
+  }
 }
 ```
 
-Response:
+## Trigger entries
 
-- returns the created signal
-- echoes the public `definition`
-- includes normalized `repeat_policy`
-- includes inferred `delivery` when relevant
+`triggers` is an array so one signal can wake up in more than one way.
 
-Input-triggered signals should include:
+For now, cap it at **3 entries max**.
+
+### Relative schedule
 
 ```json
-"definition": {
-  "trigger": { "type": "input" }
+{
+  "type": "schedule",
+  "schedule": {
+    "kind": "interval",
+    "interval_seconds": 300
+  }
 }
 ```
 
-Those signals can then be fired immediately through `POST /api/v1/signals/:id/trigger`.
+### Absolute schedule
+
+```json
+{
+  "type": "schedule",
+  "schedule": {
+    "kind": "cron",
+    "expression": "0 8 * * *"
+  }
+}
+```
+
+Absolute schedule expressions should be interpreted in UTC by default.
+
+### External trigger
+
+```json
+{
+  "type": "external"
+}
+```
+
+### Signal-to-signal trigger
+
+```json
+{
+  "type": "iruka_signal",
+  "id": "upstream-signal-id"
+}
+```
+
+If a user already knows another signal id, the user can add `type: "iruka_signal"` with that `id`. When the linked signal fires, it should wake this signal too.
+
+## Delivery
+
+Delivery stays separate from trigger semantics.
+
+Current public delivery shape:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" }
+  ]
+}
+```
+
+Even though Telegram is the only delivery target today, delivery remains an array to leave room for future fan-out.
+
+## Metadata
+
+Current metadata fields:
+
+```json
+{
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": {
+      "mode": "cooldown"
+    }
+  }
+}
+```
+
+Supported repeat policies:
+
+- `cooldown`
+- `post_first_alert_snooze`
+- `until_resolved`
 
 ## List and fetch signals
 
@@ -160,12 +247,10 @@ Returns one signal for the authenticated owner.
 Supports partial updates for fields such as:
 
 - `name`
-- `description`
+- `triggers`
 - `definition`
-- `webhook_url`
 - `delivery`
-- `cooldown_minutes`
-- `repeat_policy`
+- `metadata`
 - `is_active`
 
 ### `PATCH /api/v1/signals/:id/toggle`
@@ -199,11 +284,11 @@ For group results:
 - legacy address groups return `matchedAddresses`
 - generic tracked-value groups return `matchedTargets`
 
-## Simulation
+## External trigger execution
 
 ### `POST /api/v1/signals/:id/trigger`
 
-Use this to fire an input-triggered signal immediately.
+Use this to fire a signal that includes an `external` trigger entry.
 
 The request body can include:
 
@@ -211,6 +296,8 @@ The request body can include:
 - `payload` — optional arbitrary JSON that Iruka includes in the outgoing notification as `trigger_input.payload`
 
 Read **External Triggers** for the full setup and notification shape.
+
+## Simulation
 
 ### `POST /api/v1/simulate/:id/simulate`
 
@@ -236,19 +323,9 @@ Common response patterns:
 - `409` when a signal requires source capabilities that are not enabled
 - `500` for unexpected server errors
 
-## Webhook delivery note
-
-When you use a custom `webhook_url`, Iruka will send alert notifications to your endpoint.
-
-When you use managed Telegram delivery, create the signal with:
-
-```json
-{ "delivery": { "provider": "telegram" } }
-```
-
-Iruka will resolve the actual delivery target internally.
-
 ## What to read next
 
-- Read **Writing Signals** for payload examples
+- Read **The `definition` Layer** for the query part of the signal
+- Read **Writing Signals** for condition examples
+- Read **External Triggers** if you want externally triggered wake-up paths
 - Read **Telegram Delivery** if you want managed operator notifications

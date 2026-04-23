@@ -10,9 +10,7 @@ Before you start, make sure you have:
 
 - your Iruka **base URL**
 - either an **API key** or access to **SIWE login**
-- a destination for alerts:
-  - your own webhook endpoint, or
-  - a linked Telegram account if you plan to use managed Telegram delivery
+- a linked Telegram account if you plan to use Telegram delivery
 
 In the examples below, replace:
 
@@ -44,7 +42,7 @@ Use API keys for:
 - backend-to-backend integrations
 - cron jobs and automation
 - internal services
-- webhook-driven products
+- products that create or fire signals programmatically
 
 Send protected requests with:
 
@@ -60,14 +58,24 @@ Read **Auth** for the full SIWE flow.
 
 ## Step 3: create your first signal
 
-This example creates a threshold signal that watches a Morpho position and sends alerts to your webhook.
+This example creates a threshold signal that watches a Morpho position and delivers alerts to Telegram.
 
 ```bash
 curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <your_api_key>" \
   -d '{
+    "version": "1",
     "name": "Large supplier position",
+    "triggers": [
+      {
+        "type": "schedule",
+        "schedule": {
+          "kind": "interval",
+          "interval_seconds": 300
+        }
+      }
+    ],
     "definition": {
       "scope": {
         "chains": [1],
@@ -87,22 +95,30 @@ curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
         }
       ]
     },
-    "webhook_url": "https://example.com/webhook",
-    "cooldown_minutes": 10,
-    "repeat_policy": { "mode": "cooldown" }
+    "delivery": [
+      { "type": "telegram" }
+    ],
+    "metadata": {
+      "description": "Optional",
+      "repeat_policy": { "mode": "cooldown" }
+    }
   }'
 ```
 
-## Step 4: try an event-driven signal
+## Step 4: try an externally triggered signal
 
-This example counts ERC-20 transfers from a specific token contract over the last hour.
+This example creates a signal that can be fired by your own system.
 
 ```bash
 curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <your_api_key>" \
   -d '{
-    "name": "Busy ERC-20 token",
+    "version": "1",
+    "name": "External event alert",
+    "triggers": [
+      { "type": "external" }
+    ],
     "definition": {
       "scope": { "chains": [1], "protocol": "all" },
       "window": { "duration": "1h" },
@@ -123,7 +139,25 @@ curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
         }
       ]
     },
-    "webhook_url": "https://example.com/webhook"
+    "delivery": [
+      { "type": "telegram" }
+    ]
+  }'
+```
+
+Fire it with:
+
+```bash
+curl -sS -X POST <your_iruka_base_url>/api/v1/signals/<signal_id>/trigger \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <your_api_key>" \
+  -d '{
+    "idempotency_key": "chain1:0xTx:7",
+    "payload": {
+      "chain_id": 1,
+      "transaction_hash": "0x...",
+      "log_index": 7
+    }
   }'
 ```
 
@@ -142,20 +176,11 @@ curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id>/history \
   -H "X-API-Key: <your_api_key>"
 ```
 
-## Common next steps
-
-Once the first signal works, most teams do one or more of these next:
-
-- connect alert delivery to a production webhook
-- link Telegram delivery for human review flows
-- move from one wallet to grouped wallet monitoring
-- add swap, transfer, or contract-event monitoring
-- create product-specific signals from your app backend or webapp
-
 ## What to read next
 
 - **What You Can Build** for the capability model and boundaries
-- **Writing Signals** for more request examples
+- **The `definition` Layer** for the query structure
+- **Writing Signals** for condition examples
 - **Auth** for API keys and SIWE sessions
 - **API Reference** for routes and payloads
 - **Webapp Integration** if you are embedding Iruka into a frontend product

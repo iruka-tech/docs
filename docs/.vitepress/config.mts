@@ -27,8 +27,9 @@ export default defineConfig({
         text: 'Product Guide',
         items: [
           { text: 'What You Can Build', link: '/product/public-signal-model' },
-          { text: 'Common Use Cases', link: '/product/use-cases' },
+          { text: 'The `definition` Layer', link: '/product/definition' },
           { text: 'Writing Signals', link: '/product/dsl' },
+          { text: 'Common Use Cases', link: '/product/use-cases' },
         ],
       },
       {

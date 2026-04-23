@@ -33,16 +33,18 @@ Use external triggers when:
 
 Use scheduled signals when Iruka should keep checking state on its own over time.
 
-## Create an input-triggered signal
+## Create an externally triggered signal
 
-Create the signal through `POST /api/v1/signals` and set:
+Create the signal through `POST /api/v1/signals` and include an `external` trigger entry.
 
 ```json
 {
+  "version": "1",
   "name": "External event alert",
-  "webhook_url": "https://example.com/iruka-alerts",
+  "triggers": [
+    { "type": "external" }
+  ],
   "definition": {
-    "trigger": { "type": "input" },
     "scope": { "chains": [1], "markets": ["0xMarket"] },
     "window": { "duration": "1h" },
     "conditions": [
@@ -55,6 +57,13 @@ Create the signal through `POST /api/v1/signals` and set:
         "market_id": "0xMarket"
       }
     ]
+  },
+  "delivery": [
+    { "type": "telegram" }
+  ],
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": { "mode": "until_resolved" }
   }
 }
 ```
@@ -103,7 +112,7 @@ Example notification fields added by an external trigger:
 ```json
 {
   "trigger_input": {
-    "source": "input",
+    "source": "external",
     "triggered_at": "2026-04-21T00:00:00.000Z",
     "idempotency_key": "chain1:0xTx:7",
     "payload": {
@@ -124,6 +133,6 @@ Example notification fields added by an external trigger:
 
 ## What to read next
 
-- Read **Writing Signals** for the full signal payload shape
+- Read **The `definition` Layer** for the query part of the signal
 - Read **API Reference** for route behavior
 - Read **Webapp Integration** if your frontend needs to create or fire these signals

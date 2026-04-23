@@ -20,12 +20,13 @@ Typical building blocks:
 - `threshold` for absolute size checks
 - `change` for directional movement over time
 - `group` if you track many wallets together
+- Telegram delivery for human review
 
 Example pattern:
 
 - watch `Morpho.Position.supplyShares`
 - alert when a wallet drops by 10% over 1 hour
-- send to webhook for your alerting pipeline
+- send to Telegram for operator review
 
 ## 2. Treasury watchlists across many wallets
 
@@ -41,13 +42,13 @@ Typical building blocks:
 
 - `group`
 - multi-address `scope`
-- webhook delivery
+- scheduled triggers
 
 Example pattern:
 
 - monitor 10 treasury wallets
 - trigger when at least 3 of them fall below a balance threshold
-- fan out the alert to Slack or PagerDuty from your webhook receiver
+- wake every 5 minutes with a schedule trigger
 
 ## 3. Vault activity monitoring
 
@@ -86,6 +87,7 @@ Typical building blocks:
 - `raw-events` with `erc20_transfer`
 - `raw-events` with `erc20_approval`
 - count or sum aggregations
+- either scheduled or external triggers depending on who detects the upstream event first
 
 Example pattern:
 
@@ -132,7 +134,7 @@ Example pattern:
 
 ## 7. Human-in-the-loop operator alerts
 
-**Goal:** send clear alerts directly to humans, not just systems.
+**Goal:** send clear alerts directly to humans.
 
 Good fit for:
 
@@ -152,6 +154,28 @@ Example pattern:
 - use `Why` for quick context
 - use snooze actions to suppress repeated noise during investigation
 
+## 8. Chained signal workflows
+
+**Goal:** let one Iruka signal wake another signal.
+
+Good fit for:
+
+- multi-stage alerting
+- escalation flows
+- lightweight orchestration inside Iruka
+
+Typical building blocks:
+
+- `iruka_signal` trigger
+- Telegram delivery
+- repeat policy on the downstream signal
+
+Example pattern:
+
+- one upstream signal fires on a broad condition
+- a downstream signal wakes through `iruka_signal`
+- the downstream signal applies a narrower follow-up definition
+
 ## How to choose quickly
 
 Use this shortcut:
@@ -164,6 +188,7 @@ Use this shortcut:
 
 ## What to read next
 
-- Read **Writing Signals** for concrete payloads
+- Read **The `definition` Layer** for how the query part is structured
+- Read **Writing Signals** for concrete condition payloads
 - Read **API Reference** for route behavior
 - Read **Telegram Delivery** if you want operator-facing alerts

@@ -31,8 +31,6 @@ Recommended sequence:
 4. let Iruka own the session cookie
 5. call protected Iruka routes from the web app
 
-This keeps identity and signal ownership in one place.
-
 ## API-key flow
 
 For server-side or machine integrations:
@@ -46,7 +44,8 @@ For server-side or machine integrations:
 A frontend on top of Iruka usually handles:
 
 - listing signals
-- creating and editing signal definitions
+- creating and editing signal envelopes
+- editing the `definition` object
 - showing evaluation history
 - showing notification history
 - Telegram link UX
@@ -61,6 +60,7 @@ Iruka should remain the source of truth for:
 - auth sessions
 - API key ownership
 - signal evaluation semantics
+- trigger execution semantics
 - repeat policy behavior
 - Telegram delivery linkage and message dispatch
 
@@ -85,20 +85,52 @@ For a web app, prefer the Iruka-native Telegram endpoints:
 
 This keeps Telegram account linking inside the same Iruka account model used for signals.
 
-## Delivery choice in product UX
+## Signal envelope in product UX
 
-A clean UI usually presents two destination modes:
+A frontend should treat a signal as two editable layers:
 
-- **Webhook** — for system integrations
-- **Telegram** — for operator alerts
+- outer envelope
+- `definition`
 
-That maps directly to the create-signal payload:
+Example outer envelope:
 
-- webhook mode → send `webhook_url`
-- Telegram mode → send `delivery: { "provider": "telegram" }`
+```json
+{
+  "version": "1",
+  "name": "Large supplier position",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
+  "definition": {
+    "scope": { "chains": [1], "protocol": "morpho" },
+    "window": { "duration": "1h" },
+    "conditions": []
+  },
+  "delivery": [
+    { "type": "telegram" }
+  ],
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": { "mode": "cooldown" }
+  }
+}
+```
+
+This gives you a cleaner builder split:
+
+- envelope editor
+- definition editor
+- condition editor
 
 ## What to read next
 
 - Read **Auth** for SIWE and API-key details
 - Read **API Reference** for route-level behavior
+- Read **The `definition` Layer** for the query part of the signal
 - Read **Telegram Delivery** if you want first-party operator notifications

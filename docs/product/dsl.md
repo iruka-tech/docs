@@ -1,90 +1,54 @@
 # Writing Signals
 
-This page shows how to write signal payloads that the Iruka backend accepts today.
+This page focuses on the condition language used inside `definition.conditions[]`.
 
-Every example on this page follows the public request schema used by `POST /api/v1/signals`.
+If you want the full signal envelope first, read **The `definition` Layer** and **API Reference**.
 
-## Top-level shape
+## Signal layering
 
-A create request looks like this:
+A full signal has two layers:
+
+- outer envelope: `version`, `name`, `triggers`, `delivery`, `metadata`
+- query logic: `definition`
+
+Condition examples on this page belong inside:
 
 ```json
 {
-  "name": "Human-readable signal name",
   "definition": {
-    "trigger": { "type": "schedule" },
-    "scope": {
-      "chains": [1],
-      "protocol": "morpho",
-      "addresses": ["0x..."]
-    },
+    "scope": { "chains": [1], "protocol": "all" },
     "window": { "duration": "1h" },
-    "conditions": []
-  },
-  "webhook_url": "https://example.com/webhook",
-  "cooldown_minutes": 10,
-  "repeat_policy": { "mode": "cooldown" }
+    "conditions": [
+      {
+        "type": "threshold",
+        "source": { "kind": "alias", "name": "Morpho.Market.utilization" },
+        "operator": ">",
+        "value": 0.9,
+        "chain_id": 1,
+        "market_id": "0xMarket"
+      }
+    ]
+  }
 }
 ```
 
-You must provide at least one of:
+## Condition types
 
-- `webhook_url`
-- `delivery`
+Iruka currently supports these public condition types:
 
-## Scope
+- `threshold`
+- `change`
+- `group`
+- `aggregate`
+- `raw-events`
 
-`scope` defines the broad search space for the signal.
+## 1. Threshold
 
-```json
-{
-  "chains": [1, 8453],
-  "protocol": "morpho",
-  "addresses": ["0xabc...", "0xdef..."]
-}
-```
+Definition:
 
-Supported fields:
+A threshold condition compares one evaluated value against a target.
 
-- `chains` — required array of positive chain IDs
-- `markets` — optional array of market identifiers
-- `addresses` — optional array of addresses to track
-- `protocol` — optional, currently `"morpho"` or `"all"`
-
-## Window
-
-A signal must define a root window:
-
-```json
-{ "duration": "1h" }
-```
-
-Per-condition window overrides are also supported on condition objects.
-
-## Trigger mode
-
-Signals can wake up in two ways:
-
-- `schedule` — the default polling flow
-- `input` — an authenticated external caller wakes the signal immediately
-
-Scheduled signals should set:
-
-```json
-{ "trigger": { "type": "schedule" } }
-```
-
-Input-triggered signals should set:
-
-```json
-{ "trigger": { "type": "input" } }
-```
-
-Use input triggers when your own backend, indexer, webhook consumer, or bot already knows when something interesting happened and you want Iruka to run the normal signal evaluation and delivery flow immediately.
-
-## Threshold example
-
-This example checks whether a Morpho position is above a threshold.
+Example:
 
 ```json
 {
@@ -105,9 +69,13 @@ Rules:
 - `operator` must be one of `>`, `<`, `>=`, `<=`, `==`, `!=`
 - `value` can be a number or numeric string
 
-## Change example
+## 2. Change
 
-This example checks whether a Morpho position decreased by 10% over 24 hours.
+Definition:
+
+A change condition checks movement over time instead of only the current value.
+
+Example:
 
 ```json
 {
@@ -133,9 +101,13 @@ Supported directions:
 - `{ "percent": 10 }`
 - `{ "absolute": "1000000" }`
 
-## Group example
+## 3. Group
 
-This example checks whether at least 2 of 3 tracked addresses satisfy the same threshold condition.
+Definition:
+
+A group condition applies the same inner test across many tracked targets and checks how many matched.
+
+Address-group example:
 
 ```json
 {
@@ -163,7 +135,7 @@ This example checks whether at least 2 of 3 tracked addresses satisfy the same t
 }
 ```
 
-Tracked-value form for event-style inner sources:
+Tracked-value example:
 
 ```json
 {
@@ -196,40 +168,23 @@ Rules:
 - generic tracked groups are currently limited to event-style inner sources
 - response/history payloads may include `matchedTargets` for tracked groups
 
-## Aggregate example
+## 4. Aggregate
 
-Aggregate conditions are evaluated against the surrounding signal scope.
+Definition:
 
-What gets aggregated depends on the metric:
+An aggregate condition reduces a scoped set to one combined number.
 
-- for position metrics, include the tracked addresses in `scope.addresses`
-- for market metrics, use `scope.markets` or `market_id`
-- for event metrics, the aggregate is computed over the matching event set, optionally narrowed by filters
-
-Example definition snippet:
+Example:
 
 ```json
 {
-  "scope": {
-    "chains": [1],
-    "protocol": "morpho",
-    "addresses": [
-      "0x1111111111111111111111111111111111111111",
-      "0x2222222222222222222222222222222222222222"
-    ]
-  },
-  "window": { "duration": "1h" },
-  "conditions": [
-    {
-      "type": "aggregate",
-      "aggregation": "sum",
-      "metric": "Morpho.Position.supplyShares",
-      "chain_id": 1,
-      "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
-      "operator": ">",
-      "value": "5000000000000000000"
-    }
-  ]
+  "type": "aggregate",
+  "aggregation": "sum",
+  "metric": "Morpho.Position.supplyShares",
+  "chain_id": 1,
+  "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+  "operator": ">",
+  "value": "5000000000000000000"
 }
 ```
 
@@ -241,9 +196,15 @@ Supported aggregations:
 - `max`
 - `count`
 
-## Raw-events example: ERC-20 outbound transfer volume
+What gets aggregated depends on the surrounding signal scope and source family.
 
-This example tracks total ERC-20 transfer volume sent from one address over the last hour.
+## 5. Raw events
+
+Definition:
+
+A raw-events condition scans decoded events over a rolling window.
+
+Example:
 
 ```json
 {
@@ -259,131 +220,56 @@ This example tracks total ERC-20 transfer volume sent from one address over the 
     "contract_addresses": ["0x3333333333333333333333333333333333333333"]
   },
   "filters": [
+    { "field": "from", "op": "eq", "value": "0x1111111111111111111111111111111111111111" }
+  ]
+}
+```
+
+This is the right choice when event activity is the source of truth.
+
+## Common pattern: full `definition`
+
+```json
+{
+  "scope": {
+    "chains": [1],
+    "protocol": "all"
+  },
+  "window": { "duration": "1h" },
+  "logic": "AND",
+  "conditions": [
     {
-      "field": "from",
-      "op": "eq",
-      "value": "0x1111111111111111111111111111111111111111"
+      "type": "threshold",
+      "source": {
+        "kind": "raw_event",
+        "aggregation": "count",
+        "chain_id": 1,
+        "event": {
+          "kind": "erc20_transfer",
+          "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+        }
+      },
+      "operator": ">",
+      "value": 100
     }
   ]
 }
 ```
 
-You can also filter by `to`, or by both `from` and `to` in the same raw-events condition.
+## What this page does not cover
 
-For ERC-20 transfers, common decoded filter fields include:
+This page does not define:
 
-- `from`
-- `to`
-- `value`
+- `version`
+- `name`
+- `triggers`
+- `delivery`
+- `metadata`
 
-For `count`, `field` is optional.
-
-Iruka can track gross inbound or outbound volume this way. Netting inflow minus outflow for the same address is not exposed as a single raw-events primitive today.
-
-## Raw-events example: swaps
-
-```json
-{
-  "type": "raw-events",
-  "aggregation": "sum",
-  "field": "amount0_abs",
-  "operator": ">",
-  "value": 1000000,
-  "chain_id": 1,
-  "window": { "duration": "30m" },
-  "event": {
-    "kind": "swap",
-    "protocols": ["uniswap_v3"]
-  }
-}
-```
-
-## Raw-events example: custom contract event
-
-```json
-{
-  "type": "raw-events",
-  "aggregation": "count",
-  "operator": ">",
-  "value": 2,
-  "chain_id": 1,
-  "window": { "duration": "1h" },
-  "event": {
-    "kind": "contract_event",
-    "contract_addresses": ["0x5555555555555555555555555555555555555555"],
-    "signature": "Transfer(address indexed from, address indexed to, uint256 value)"
-  }
-}
-```
-
-## Using `state_ref`
-
-If you do not want to rely on a named metric, you can use an explicit `state_ref`.
-
-```json
-{
-  "type": "threshold",
-  "state_ref": {
-    "protocol": "erc4626",
-    "entity_type": "Position",
-    "field": "shares",
-    "filters": [
-      { "field": "chainId", "op": "eq", "value": 1 },
-      { "field": "contractAddress", "op": "eq", "value": "0x6666666666666666666666666666666666666666" },
-      { "field": "owner", "op": "eq", "value": "0x1111111111111111111111111111111111111111" }
-    ]
-  },
-  "operator": ">",
-  "value": "1000000000000000000"
-}
-```
-
-Rules:
-
-- `state_ref` must include `protocol`, `entity_type`, `field`, and at least one filter
-- do not send both `metric` and `state_ref` in the same threshold or change condition
-
-## Full create example with Telegram delivery
-
-```json
-{
-  "name": "High swap activity",
-  "definition": {
-    "scope": {
-      "chains": [1],
-      "protocol": "all"
-    },
-    "window": { "duration": "30m" },
-    "conditions": [
-      {
-        "type": "raw-events",
-        "aggregation": "count",
-        "operator": ">",
-        "value": 10,
-        "chain_id": 1,
-        "event": {
-          "kind": "swap",
-          "protocols": ["uniswap_v2", "uniswap_v3"]
-        }
-      }
-    ]
-  },
-  "delivery": { "provider": "telegram" },
-  "cooldown_minutes": 5,
-  "repeat_policy": { "mode": "until_resolved" }
-}
-```
-
-## Common validation rules to remember
-
-- `scope.chains` is required
-- `definition.window` is required
-- `conditions` must contain at least one condition
-- threshold and change conditions require exactly one of `metric` or `state_ref`
-- `raw-events` requires `field` unless `aggregation` is `count`
-- `webhook_url` or `delivery` is required at the top level
+Those belong to the outer signal envelope.
 
 ## What to read next
 
-- Read **Auth** before integrating from a real application
-- Read **API Reference** for route behavior and response payloads
+- Read **The `definition` Layer** for `scope`, `window`, `logic`, and `conditions`
+- Read **API Reference** for the full create-signal request shape
+- Read **External Triggers** for externally triggered signals
