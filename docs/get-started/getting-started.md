@@ -180,7 +180,7 @@ curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id>/history \
 
 - **Signal Model** for the capability model and boundaries
 - **The `definition` Layer** for the query structure
-- **Writing Signals** for condition examples
+- **Examples** for condition examples
 - **Auth** for API keys and SIWE sessions
 - **API Reference** for routes and payloads
 - **Webapp Integration** if you are embedding Iruka into a frontend product

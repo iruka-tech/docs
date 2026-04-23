@@ -29,7 +29,7 @@ export default defineConfig({
           { text: 'Signal Model', link: '/product/public-signal-model' },
           { text: 'Create a Signal', link: '/product/create-a-signal' },
           { text: 'The `definition` Object', link: '/product/definition' },
-          { text: 'Writing Signals', link: '/product/dsl' },
+          { text: 'Examples', link: '/product/dsl' },
           { text: 'Common Use Cases', link: '/product/use-cases' },
         ],
       },

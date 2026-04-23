@@ -1,65 +1,14 @@
-# Writing Signals
+# Examples
 
-This page is a **condition reference**.
+This page gives concrete signal examples.
 
-It explains the objects that belong inside:
+Read **Signal Model** first for the big picture.
+Read **Create a Signal** for the top-level schema.
+Read **The `definition` Object** for what belongs inside `definition`.
 
-```json
-{
-  "definition": {
-    "conditions": [
-      { "type": "..." }
-    ]
-  }
-}
-```
+This page focuses on practical examples.
 
-If you want the full signal shape first, read **API Reference**.
-If you want the structure of `definition` first, read **The `definition` Object**.
-
-## Before the condition examples
-
-A full signal has two layers:
-
-- outer envelope: `version`, `name`, `triggers`, `delivery`, `metadata`
-- query layer: `definition`
-
-This page covers only the condition objects that go inside:
-
-```json
-{
-  "definition": {
-    "scope": { "chains": [1], "protocol": "all" },
-    "window": { "duration": "1h" },
-    "conditions": [
-      {
-        "type": "threshold",
-        "source": { "kind": "alias", "name": "Morpho.Market.utilization" },
-        "operator": ">",
-        "value": 0.9,
-        "chain_id": 1,
-        "market_id": "0xMarket"
-      }
-    ]
-  }
-}
-```
-
-## Condition types
-
-Iruka currently supports these public condition types:
-
-- `threshold`
-- `change`
-- `group`
-- `aggregate`
-- `raw-events`
-
----
-
-## 1. `threshold`
-
-### What it means
+## Example 1: threshold
 
 A threshold condition compares one evaluated value against a target.
 
@@ -77,27 +26,31 @@ A threshold condition compares one evaluated value against a target.
 }
 ```
 
-### Where it lives
+### Full `definition` example
 
 ```json
 {
-  "definition": {
-    "conditions": [
-      {
-        "type": "threshold",
-        "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
-        "chain_id": 1,
-        "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
-        "address": "0x1111111111111111111111111111111111111111",
-        "operator": ">",
-        "value": "1000000000000000000"
-      }
-    ]
-  }
+  "scope": {
+    "chains": [1],
+    "protocol": "morpho",
+    "addresses": ["0x1111111111111111111111111111111111111111"]
+  },
+  "window": { "duration": "1h" },
+  "conditions": [
+    {
+      "type": "threshold",
+      "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+      "chain_id": 1,
+      "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "address": "0x1111111111111111111111111111111111111111",
+      "operator": ">",
+      "value": "1000000000000000000"
+    }
+  ]
 }
 ```
 
-### Rules
+Rules:
 
 - preferred input is `source`
 - compatibility inputs `metric` and `state_ref` are still accepted
@@ -106,9 +59,7 @@ A threshold condition compares one evaluated value against a target.
 
 ---
 
-## 2. `change`
-
-### What it means
+## Example 2: change
 
 A change condition checks movement over time instead of only the current value.
 
@@ -127,28 +78,30 @@ A change condition checks movement over time instead of only the current value.
 }
 ```
 
-### Where it lives
+### Full `definition` example
 
 ```json
 {
-  "definition": {
-    "conditions": [
-      {
-        "type": "change",
-        "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
-        "direction": "decrease",
-        "by": { "percent": 10 },
-        "window": { "duration": "24h" },
-        "chain_id": 1,
-        "market_id": "0xMarket",
-        "address": "0xUser"
-      }
-    ]
-  }
+  "scope": {
+    "chains": [1],
+    "protocol": "morpho",
+    "addresses": ["0x1111111111111111111111111111111111111111"]
+  },
+  "window": { "duration": "1h" },
+  "conditions": [
+    {
+      "type": "change",
+      "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+      "chain_id": 1,
+      "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "address": "0x1111111111111111111111111111111111111111",
+      "direction": "decrease",
+      "by": { "percent": 10 },
+      "window": { "duration": "24h" }
+    }
+  ]
 }
 ```
-
-### Rules
 
 Supported directions:
 
@@ -163,9 +116,7 @@ Supported directions:
 
 ---
 
-## 3. `group`
-
-### What it means
+## Example 3: group
 
 A group condition applies the same inner test across many tracked targets and checks how many matched.
 
@@ -226,34 +177,37 @@ Tracked-value form:
 }
 ```
 
-### Where it lives
+### Full `definition` example
 
 ```json
 {
-  "definition": {
-    "conditions": [
-      {
-        "type": "group",
-        "addresses": ["0x1", "0x2", "0x3"],
-        "logic": "AND",
-        "requirement": { "count": 2, "of": 3 },
-        "conditions": [
-          {
-            "type": "threshold",
-            "metric": "Morpho.Position.supplyShares",
-            "chain_id": 1,
-            "market_id": "0xMarket",
-            "operator": ">",
-            "value": "1000000000000000000"
-          }
-        ]
-      }
-    ]
-  }
+  "scope": {
+    "chains": [1],
+    "protocol": "all"
+  },
+  "window": { "duration": "1h" },
+  "conditions": [
+    {
+      "type": "group",
+      "addresses": ["0x1", "0x2", "0x3"],
+      "logic": "AND",
+      "requirement": { "count": 2, "of": 3 },
+      "conditions": [
+        {
+          "type": "threshold",
+          "metric": "Morpho.Position.supplyShares",
+          "chain_id": 1,
+          "market_id": "0xMarket",
+          "operator": ">",
+          "value": "1000000000000000000"
+        }
+      ]
+    }
+  ]
 }
 ```
 
-### Rules
+Rules:
 
 - set exactly one of `addresses` or `tracked`
 - generic tracked groups are currently limited to event-style inner sources
@@ -261,9 +215,7 @@ Tracked-value form:
 
 ---
 
-## 4. `aggregate`
-
-### What it means
+## Example 4: aggregate
 
 An aggregate condition reduces a scoped set to one combined number.
 
@@ -281,32 +233,29 @@ An aggregate condition reduces a scoped set to one combined number.
 }
 ```
 
-### Where it lives
+### Full `definition` example
 
 ```json
 {
-  "definition": {
-    "scope": {
-      "chains": [1],
-      "protocol": "morpho",
-      "addresses": ["0x1", "0x2"]
-    },
-    "conditions": [
-      {
-        "type": "aggregate",
-        "aggregation": "sum",
-        "metric": "Morpho.Position.supplyShares",
-        "chain_id": 1,
-        "market_id": "0xMarket",
-        "operator": ">",
-        "value": "5000000000000000000"
-      }
-    ]
-  }
+  "scope": {
+    "chains": [1],
+    "protocol": "morpho",
+    "addresses": ["0x1", "0x2"]
+  },
+  "window": { "duration": "1h" },
+  "conditions": [
+    {
+      "type": "aggregate",
+      "aggregation": "sum",
+      "metric": "Morpho.Position.supplyShares",
+      "chain_id": 1,
+      "market_id": "0xMarket",
+      "operator": ">",
+      "value": "5000000000000000000"
+    }
+  ]
 }
 ```
-
-### Rules
 
 Supported aggregations:
 
@@ -320,9 +269,7 @@ What gets aggregated depends on the surrounding signal scope and source family.
 
 ---
 
-## 5. `raw-events`
-
-### What it means
+## Example 5: raw-events
 
 A raw-events condition scans decoded events over a rolling window.
 
@@ -347,37 +294,7 @@ A raw-events condition scans decoded events over a rolling window.
 }
 ```
 
-### Where it lives
-
-```json
-{
-  "definition": {
-    "conditions": [
-      {
-        "type": "raw-events",
-        "aggregation": "sum",
-        "field": "value",
-        "operator": ">",
-        "value": 1000000000000000000000,
-        "chain_id": 1,
-        "window": { "duration": "1h" },
-        "event": {
-          "kind": "erc20_transfer",
-          "contract_addresses": ["0x3333333333333333333333333333333333333333"]
-        }
-      }
-    ]
-  }
-}
-```
-
-### Rules
-
-This is the right choice when event activity is the source of truth.
-
----
-
-## Full `definition` example
+### Full `definition` example
 
 ```json
 {
@@ -386,40 +303,31 @@ This is the right choice when event activity is the source of truth.
     "protocol": "all"
   },
   "window": { "duration": "1h" },
-  "logic": "AND",
   "conditions": [
     {
-      "type": "threshold",
-      "source": {
-        "kind": "raw_event",
-        "aggregation": "count",
-        "chain_id": 1,
-        "event": {
-          "kind": "erc20_transfer",
-          "contract_addresses": ["0x3333333333333333333333333333333333333333"]
-        }
-      },
+      "type": "raw-events",
+      "aggregation": "sum",
+      "field": "value",
       "operator": ">",
-      "value": 100
+      "value": 1000000000000000000000,
+      "chain_id": 1,
+      "window": { "duration": "1h" },
+      "event": {
+        "kind": "erc20_transfer",
+        "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+      },
+      "filters": [
+        { "field": "from", "op": "eq", "value": "0x1111111111111111111111111111111111111111" }
+      ]
     }
   ]
 }
 ```
 
-## What this page does not cover
-
-This page does not define:
-
-- `version`
-- `name`
-- `triggers`
-- `delivery`
-- `metadata`
-
-Those belong to the outer signal envelope.
+This is the right choice when event activity is the source of truth.
 
 ## What to read next
 
-- Read **The `definition` Object** for `scope`, `window`, `logic`, and `conditions`
-- Read **API Reference** for the full create-signal request shape
-- Read **External Triggers** for externally triggered signals
+- Read **Create a Signal** for the top-level schema
+- Read **The `definition` Object** for the structure inside `definition`
+- Read **API Reference** for routes and request behavior

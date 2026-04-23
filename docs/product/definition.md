@@ -141,5 +141,5 @@ It belongs inside:
 
 ## What to read next
 
-- Read **Writing Signals** for condition-by-condition examples
+- Read **Examples** for condition-by-condition examples
 - Read **API Reference** for routes and full request behavior
