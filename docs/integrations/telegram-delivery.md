@@ -42,16 +42,6 @@ Iruka exposes two integration endpoints for the current authenticated user:
 Today, Telegram linking still depends on the current account-link flow behind those endpoints.
 API-first bot linking is planned, but not live yet.
 
-## Telegram actions
-
-Telegram alerts support:
-
-- `Why`
-- `Snooze 1h`
-- `Snooze 1d`
-
-These are handled by the delivery adapter. Your frontend does not need to implement Telegram callback logic itself.
-
 ## Repeat policy vs Telegram snooze
 
 These are separate concepts.
