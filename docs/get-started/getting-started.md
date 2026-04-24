@@ -7,6 +7,7 @@ Before you start, make sure you have:
 - your Iruka API base URL: `https://api.hiruka.tech`
 - an API key generated from the Iruka console on `iruka.tech`
 - a linked Telegram account if you plan to use Telegram delivery
+- a public HTTPS endpoint if you plan to use webhook delivery
 
 In the examples below, replace `<your_api_key>` with your real API key.
 
@@ -38,7 +39,7 @@ X-API-Key: iruka_...
 
 ## Step 3: create your first signal
 
-This example creates a scheduled threshold signal that watches an ERC20 balance and delivers alerts to Telegram.
+This example creates a scheduled threshold signal that watches an ERC20 balance and delivers alerts to a webhook.
 
 > [!NOTE]
 > The example still includes `definition.scope` because that is part of the current backend contract.
@@ -81,13 +82,27 @@ curl -sS -X POST https://api.hiruka.tech/api/v1/signals \
       ]
     },
     "delivery": [
-      { "type": "telegram" }
+      {
+        "type": "webhook",
+        "url": "https://antonmyown.dev/webhook/iruka"
+      }
     ],
     "metadata": {
       "description": "Optional",
       "repeat_policy": { "mode": "cooldown" }
     }
   }'
+```
+
+If you want both human alerts and machine-readable delivery, use both targets:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
 ```
 
 ### Option B: cron schedule

@@ -50,7 +50,7 @@ A signal has five top-level parts:
     ]
   },
   "delivery": [
-    { "type": "telegram" }
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
   ],
   "metadata": {
     "description": "Optional",
@@ -161,7 +161,7 @@ Read **Definition** next for the details.
 
 `delivery` defines where notifications go.
 
-Current public delivery shape:
+Current public delivery shapes:
 
 ```json
 {
@@ -171,8 +171,26 @@ Current public delivery shape:
 }
 ```
 
-Telegram is the only public delivery target supported in the signal schema today.
-The field stays an array so the model can support additional targets later.
+```json
+{
+  "delivery": [
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+Use Telegram when Iruka should reach a linked chat.
+Use webhook when Iruka should POST the alert payload to your own system.
+The field stays an array because one signal can fan out to both.
 
 ### `metadata`
 
