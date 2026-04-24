@@ -15,14 +15,65 @@ It contains:
 - `logic`
 - `conditions`
 
+## Supported protocols today
+
+The first thing to know is what kinds of signals you can actually build today.
+
+Current supported protocol families in the public docs are:
+
+- `Morpho`
+- `ERC4626`
+- `ERC20`
+
+Current protocol/entity shapes:
+
+- `Morpho.Position`
+- `Morpho.Market`
+- `Morpho.Event`
+- `Morpho.Flow`
+- `ERC4626.Position`
+- `ERC20.Position`
+
+Use those through `source.kind = "alias"` names such as:
+
+- `Morpho.Position.supplyShares`
+- `Morpho.Market.totalBorrowAssets`
+- `ERC4626.Position.shares`
+- `ERC20.Position.balance`
+
+> [!NOTE]
+> We plan to generalize this further over time so signals can target broader function- and event-level inputs.
+> For now, the clearest public starting point is the current alias-based protocol set above.
+
+## How to think about entities
+
+Each protocol family has its own entity model.
+
+Today:
+
+- **Morpho** uses `Position`, `Market`, `Event`, and `Flow`
+- **ERC4626** uses `Position`
+- **ERC20** uses `Position`
+
+That means the required condition inputs differ by protocol.
+
+For example:
+
+- **Morpho.Position** usually needs a market target plus a user address
+- **ERC4626.Position** needs a vault contract plus an owner address
+- **ERC20.Position** needs a token contract plus a holder address
+
+ERC20 is the simplest example to read first because there is no market-style `entity_id` in the public condition shape. You mainly provide:
+
+- `contract_address` — which token
+- `address` — which holder
+
 ## `definition` example
 
 ```json
 {
   "scope": {
     "chains": [1],
-    "protocol": "morpho",
-    "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
     "addresses": ["0x1111111111111111111111111111111111111111"]
   },
   "window": { "duration": "1h" },
@@ -30,12 +81,12 @@ It contains:
   "conditions": [
     {
       "type": "threshold",
-      "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "address": "0x1111111111111111111111111111111111111111",
       "operator": ">",
-      "value": "1000000000000000000"
+      "value": "1000000000"
     }
   ]
 }
@@ -44,69 +95,22 @@ It contains:
 ## `scope`
 
 > [!NOTE]
-> `scope` is legacy in the public docs and is expected to be deprecated in a later backend/schema cleanup.
-> It is still part of the current backend contract, so the docs keep it here to reflect what works today.
+> `scope` is legacy and is expected to be deprecated in a later backend/schema cleanup.
+> It is still part of the current backend contract, so the docs keep only a minimal explanation here.
 
-`scope` defines the allowed search space for the whole definition.
+`scope` is the broad outer filter for the definition.
 
-Think of it as the outer filter:
-
-- which chains Iruka is allowed to look at
-- which protocol family it should use
-- which entities are in play
-- which addresses are in play
-
-```json
-{
-  "scope": {
-    "chains": [1, 8453],
-    "protocol": "morpho",
-    "entities": ["0xabc...", "0xdef..."],
-    "addresses": ["0x111...", "0x222..."]
-  }
-}
-```
-
-Supported fields:
+Current fields:
 
 - `chains` — required array of positive chain IDs
-- `protocol` — optional, currently `"morpho"` or `"all"`
 - `entities` — optional array of entity identifiers
-- `addresses` — optional array of addresses to track
+- `addresses` — optional array of addresses
+- `protocol` — optional legacy filter, currently only `"morpho"` or `"all"` in the backend validator
 
-### What is an `entity`?
+For new users, the important thing is simple:
 
-An `entity` is the protocol object your condition is about.
-
-In the Morpho examples in these docs, `entity_id` is the **market id**.
-So a position condition usually needs both:
-
-- `entity_id` — which market
-- `address` — which user inside that market
-
-Today, the clearest public example is:
-
-- `protocol: "morpho"`
-- `entities: ["0x…"]` where each value is a Morpho market id
-
-### Why define `addresses` in `scope` at all?
-
-Because `scope` is the shared candidate set for the whole definition, while each condition is the specific test.
-
-That split matters for three reasons:
-
-1. **Consistency across conditions** — every condition must stay inside the same allowed address set.
-2. **Less repetition** — if several conditions use the same tracked addresses, you define them once in `scope`.
-3. **Compiler fallback** — if a condition omits `address` or `entity_id`, Iruka can fill it from `scope` only when there is exactly one value there. If `scope` has multiple values, leaving it out becomes ambiguous.
-
-So the rule is:
-
-- put the shared allowed set in `scope`
-- put the exact per-condition target in the condition when needed
-
-If you only have one tracked address, putting it in both places can feel repetitive, but it still keeps the definition explicit and consistent.
-
-Use `scope` for broad narrowing. Put the actual threshold or event test in `conditions`.
+- put the actual thing you want to measure in `conditions`
+- treat `scope` as legacy scaffolding that still exists because the backend expects it today
 
 ## `window`
 
@@ -153,12 +157,12 @@ A threshold example belongs here, not at the top level.
   "conditions": [
     {
       "type": "threshold",
-      "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "address": "0x1111111111111111111111111111111111111111",
       "operator": ">",
-      "value": "1000000000000000000"
+      "value": "1000000000"
     }
   ]
 }

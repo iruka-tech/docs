@@ -38,7 +38,7 @@ X-API-Key: iruka_...
 
 ## Step 3: create your first signal
 
-This example creates a scheduled threshold signal that watches a Morpho position and delivers alerts to Telegram.
+This example creates a scheduled threshold signal that watches an ERC20 balance and delivers alerts to Telegram.
 
 > [!NOTE]
 > The example still includes `definition.scope` because that is part of the current backend contract.
@@ -52,7 +52,7 @@ curl -sS -X POST https://api.hiruka.tech/api/v1/signals \
   -H "X-API-Key: <your_api_key>" \
   -d '{
     "version": "1",
-    "name": "Large supplier position",
+    "name": "Large USDC holder",
     "triggers": [
       {
         "type": "schedule",
@@ -65,20 +65,18 @@ curl -sS -X POST https://api.hiruka.tech/api/v1/signals \
     "definition": {
       "scope": {
         "chains": [1],
-        "protocol": "morpho",
-        "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
         "addresses": ["0x1111111111111111111111111111111111111111"]
       },
       "window": { "duration": "1h" },
       "conditions": [
         {
           "type": "threshold",
-          "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+          "source": { "kind": "alias", "name": "ERC20.Position.balance" },
           "chain_id": 1,
-          "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+          "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
           "address": "0x1111111111111111111111111111111111111111",
           "operator": ">",
-          "value": "1000000000000000000"
+          "value": "1000000000"
         }
       ]
     },
@@ -129,4 +127,3 @@ curl -sS https://api.hiruka.tech/api/v1/signals/<signal_id>/history \
 - **Definition** for the query structure
 - **Examples** for condition examples
 - **API Reference** for routes and payloads
-- **Webapp Integration** if you are embedding Iruka into a frontend product

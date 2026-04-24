@@ -39,7 +39,8 @@ Iruka exposes two integration endpoints for the current authenticated user:
 - `GET /api/v1/me/integrations/telegram`
 - `POST /api/v1/me/integrations/telegram/link`
 
-Use these from your web app when users need to connect Telegram.
+Today, Telegram linking still depends on the current account-link flow behind those endpoints.
+API-first bot linking is planned, but not live yet.
 
 ## Telegram actions
 
@@ -86,4 +87,3 @@ This keeps the bridge trusted even when the delivery process is separate from th
 ## What to read next
 
 - Read **API Reference** for signal creation and history routes
-- Read **Webapp Integration** if you are building a frontend on top of Iruka

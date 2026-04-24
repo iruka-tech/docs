@@ -20,7 +20,7 @@ A signal has five top-level parts:
 ```json
 {
   "version": "1",
-  "name": "Large supplier position",
+  "name": "Large USDC holder",
   "triggers": [
     {
       "type": "schedule",
@@ -33,8 +33,6 @@ A signal has five top-level parts:
   "definition": {
     "scope": {
       "chains": [1],
-      "protocol": "morpho",
-      "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
       "addresses": ["0x1111111111111111111111111111111111111111"]
     },
     "window": { "duration": "1h" },
@@ -42,12 +40,12 @@ A signal has five top-level parts:
     "conditions": [
       {
         "type": "threshold",
-        "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+        "source": { "kind": "alias", "name": "ERC20.Position.balance" },
         "chain_id": 1,
-        "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
         "address": "0x1111111111111111111111111111111111111111",
         "operator": ">",
-        "value": "1000000000000000000"
+        "value": "1000000000"
       }
     ]
   },

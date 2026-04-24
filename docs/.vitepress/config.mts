@@ -41,7 +41,6 @@ export default defineConfig({
         text: 'Integrations',
         items: [
           { text: 'Telegram Delivery', link: '/integrations/telegram-delivery' },
-          { text: 'Webapp Integration', link: '/integrations/webapp-integration' },
         ],
       },
     ],

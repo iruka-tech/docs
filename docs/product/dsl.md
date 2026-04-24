@@ -14,12 +14,12 @@ A threshold condition compares one evaluated value against a target.
 ```json
 {
   "type": "threshold",
-  "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
   "chain_id": 1,
-  "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
   "address": "0x1111111111111111111111111111111111111111",
   "operator": ">",
-  "value": "1000000000000000000"
+  "value": "1000000000"
 }
 ```
 
@@ -29,20 +29,18 @@ A threshold condition compares one evaluated value against a target.
 {
   "scope": {
     "chains": [1],
-    "protocol": "morpho",
-    "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
     "addresses": ["0x1111111111111111111111111111111111111111"]
   },
   "window": { "duration": "1h" },
   "conditions": [
     {
       "type": "threshold",
-      "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "address": "0x1111111111111111111111111111111111111111",
       "operator": ">",
-      "value": "1000000000000000000"
+      "value": "1000000000"
     }
   ]
 }
@@ -66,9 +64,9 @@ A change condition checks movement over time instead of only the current value.
 ```json
 {
   "type": "change",
-  "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
   "chain_id": 1,
-  "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
   "address": "0x1111111111111111111111111111111111111111",
   "direction": "decrease",
   "by": { "percent": 10 },
@@ -82,16 +80,14 @@ A change condition checks movement over time instead of only the current value.
 {
   "scope": {
     "chains": [1],
-    "protocol": "morpho",
-    "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
     "addresses": ["0x1111111111111111111111111111111111111111"]
   },
   "conditions": [
     {
       "type": "change",
-      "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "address": "0x1111111111111111111111111111111111111111",
       "direction": "decrease",
       "by": { "percent": 10 },
@@ -111,16 +107,16 @@ Use this when one signal should watch many addresses and alert if enough of them
 {
   "scope": {
     "chains": [1],
-    "protocol": "morpho",
     "addresses": ["0xaaa...", "0xbbb...", "0xccc..."]
   },
   "conditions": [
     {
       "type": "group_threshold",
-      "source": { "kind": "alias", "name": "Morpho.Position.borrowAssets" },
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
+      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "operator": ">",
-      "value": "1000000000000000000000",
+      "value": "1000000000",
       "group": {
         "operator": ">=",
         "value": 2
