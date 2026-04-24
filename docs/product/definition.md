@@ -43,6 +43,10 @@ It contains:
 
 ## `scope`
 
+> [!NOTE]
+> `scope` is legacy in the public docs and is expected to be deprecated in a later backend/schema cleanup.
+> It is still part of the current backend contract, so the docs keep it here to reflect what works today.
+
 `scope` defines the allowed search space for the whole definition.
 
 Think of it as the outer filter:

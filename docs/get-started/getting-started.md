@@ -40,6 +40,10 @@ X-API-Key: iruka_...
 
 This example creates a scheduled threshold signal that watches a Morpho position and delivers alerts to Telegram.
 
+> [!NOTE]
+> The example still includes `definition.scope` because that is part of the current backend contract.
+> Treat `scope` as legacy in the docs and likely to be deprecated later.
+
 ### Option A: interval schedule
 
 ```bash
