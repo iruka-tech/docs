@@ -60,6 +60,8 @@ Read **Auth** for the full SIWE flow.
 
 This example creates a scheduled threshold signal that watches a Morpho position and delivers alerts to Telegram.
 
+### Option A: interval schedule
+
 ```bash
 curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
   -H "Content-Type: application/json" \
@@ -104,6 +106,22 @@ curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
     }
   }'
 ```
+
+### Option B: cron schedule
+
+Use cron when the signal should wake at a fixed UTC time instead of every N seconds.
+
+```json
+{
+  "type": "schedule",
+  "schedule": {
+    "kind": "cron",
+    "expression": "0 8 * * *"
+  }
+}
+```
+
+That example runs every day at **08:00 UTC**. Use standard **five-field** cron syntax.
 
 ## Step 4: inspect what you created
 

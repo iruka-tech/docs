@@ -170,7 +170,13 @@ For now, cap it at **3 entries max**.
 }
 ```
 
-Absolute schedule expressions should be interpreted in UTC by default.
+Absolute schedule expressions use standard **five-field cron syntax** and are interpreted in **UTC**.
+
+Common examples:
+
+- `0 8 * * *` — every day at 08:00 UTC
+- `0 * * * *` — every hour on the hour
+- `*/15 * * * *` — every 15 minutes
 
 ### External trigger
 
