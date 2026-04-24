@@ -10,7 +10,6 @@ Read **Signal** first if you want the full top-level signal shape.
 
 It contains:
 
-- `scope`
 - `window`
 - `logic`
 - `conditions`
@@ -72,10 +71,6 @@ ERC20 is the simplest example to read first because there is no market-style `en
 
 ```json
 {
-  "scope": {
-    "chains": [1],
-    "addresses": ["0x1111111111111111111111111111111111111111"]
-  },
   "window": { "duration": "1h" },
   "logic": "AND",
   "conditions": [
@@ -91,26 +86,6 @@ ERC20 is the simplest example to read first because there is no market-style `en
   ]
 }
 ```
-
-## `scope`
-
-> [!NOTE]
-> `scope` is legacy and is expected to be deprecated in a later backend/schema cleanup.
-> It is still part of the current backend contract, so the docs keep only a minimal explanation here.
-
-`scope` is the broad outer filter for the definition.
-
-Current fields:
-
-- `chains` — required array of positive chain IDs
-- `entities` — optional array of entity identifiers
-- `addresses` — optional array of addresses
-- `protocol` — optional legacy filter, currently only `"morpho"` or `"all"` in the backend validator
-
-For new users, the important thing is simple:
-
-- put the actual thing you want to measure in `conditions`
-- treat `scope` as legacy scaffolding that still exists because the backend expects it today
 
 ## `window`
 
