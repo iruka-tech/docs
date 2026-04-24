@@ -140,6 +140,30 @@ Current outer shape:
 }
 ```
 
+For entity-scoped signals, use `definition.scope.entities` to narrow the scope and `condition.entity_id` inside each condition.
+
+```json
+{
+  "definition": {
+    "scope": {
+      "chains": [1],
+      "protocol": "morpho",
+      "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"]
+    },
+    "conditions": [
+      {
+        "type": "threshold",
+        "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+        "chain_id": 1,
+        "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "operator": ">",
+        "value": "1000000000000000000"
+      }
+    ]
+  }
+}
+```
+
 ## Trigger entries
 
 `triggers` is an array so one signal can wake up in more than one way.

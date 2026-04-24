@@ -22,6 +22,7 @@ It contains:
   "scope": {
     "chains": [1],
     "protocol": "morpho",
+    "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
     "addresses": ["0x1111111111111111111111111111111111111111"]
   },
   "window": { "duration": "1h" },
@@ -31,7 +32,7 @@ It contains:
       "type": "threshold",
       "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
       "chain_id": 1,
-      "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
       "address": "0x1111111111111111111111111111111111111111",
       "operator": ">",
       "value": "1000000000000000000"
@@ -49,6 +50,7 @@ It contains:
   "scope": {
     "chains": [1, 8453],
     "protocol": "morpho",
+    "entities": ["0xabc...", "0xdef..."],
     "addresses": ["0xabc...", "0xdef..."]
   }
 }
@@ -57,7 +59,7 @@ It contains:
 Supported fields:
 
 - `chains` — required array of positive chain IDs
-- `markets` — optional array of market identifiers
+- `entities` — optional array of entity identifiers
 - `addresses` — optional array of addresses to track
 - `protocol` — optional, currently `"morpho"` or `"all"`
 
@@ -110,7 +112,7 @@ A threshold example belongs here, not at the top level.
       "type": "threshold",
       "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
       "chain_id": 1,
-      "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
       "address": "0x1111111111111111111111111111111111111111",
       "operator": ">",
       "value": "1000000000000000000"

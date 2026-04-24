@@ -16,7 +16,7 @@ A threshold condition compares one evaluated value against a target.
   "type": "threshold",
   "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
   "chain_id": 1,
-  "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+  "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
   "address": "0x1111111111111111111111111111111111111111",
   "operator": ">",
   "value": "1000000000000000000"
@@ -30,6 +30,7 @@ A threshold condition compares one evaluated value against a target.
   "scope": {
     "chains": [1],
     "protocol": "morpho",
+    "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
     "addresses": ["0x1111111111111111111111111111111111111111"]
   },
   "window": { "duration": "1h" },
@@ -38,7 +39,7 @@ A threshold condition compares one evaluated value against a target.
       "type": "threshold",
       "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
       "chain_id": 1,
-      "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
       "address": "0x1111111111111111111111111111111111111111",
       "operator": ">",
       "value": "1000000000000000000"
@@ -67,7 +68,7 @@ A change condition checks movement over time instead of only the current value.
   "type": "change",
   "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
   "chain_id": 1,
-  "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+  "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
   "address": "0x1111111111111111111111111111111111111111",
   "direction": "decrease",
   "by": { "percent": 10 },
@@ -82,6 +83,7 @@ A change condition checks movement over time instead of only the current value.
   "scope": {
     "chains": [1],
     "protocol": "morpho",
+    "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
     "addresses": ["0x1111111111111111111111111111111111111111"]
   },
   "conditions": [
@@ -89,7 +91,7 @@ A change condition checks movement over time instead of only the current value.
       "type": "change",
       "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
       "chain_id": 1,
-      "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+      "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
       "address": "0x1111111111111111111111111111111111111111",
       "direction": "decrease",
       "by": { "percent": 10 },

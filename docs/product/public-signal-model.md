@@ -41,6 +41,7 @@ A signal has five top-level parts:
     "scope": {
       "chains": [1],
       "protocol": "morpho",
+      "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"],
       "addresses": ["0x1111111111111111111111111111111111111111"]
     },
     "window": { "duration": "1h" },
@@ -50,7 +51,7 @@ A signal has five top-level parts:
         "type": "threshold",
         "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
         "chain_id": 1,
-        "market_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
         "address": "0x1111111111111111111111111111111111111111",
         "operator": ">",
         "value": "1000000000000000000"
