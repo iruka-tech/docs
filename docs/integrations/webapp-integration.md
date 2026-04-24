@@ -117,7 +117,6 @@ This gives you a cleaner builder split:
 
 ## What to read next
 
-- Read **Auth** for API-key details
 - Read **API Reference** for route-level behavior
 - Read **Definition** for the query part of the signal
 - Read **Telegram Delivery** if you want first-party operator notifications

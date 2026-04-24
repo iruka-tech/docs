@@ -124,6 +124,5 @@ curl -sS https://api.hiruka.tech/api/v1/signals/<signal_id>/history \
 - **Signal** for the target signal schema
 - **Definition** for the query structure
 - **Examples** for condition examples
-- **Auth** for API key usage
 - **API Reference** for routes and payloads
 - **Webapp Integration** if you are embedding Iruka into a frontend product

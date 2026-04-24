@@ -1,13 +1,6 @@
 # Signal
 
-Start here.
-
 This page explains what a signal is and what the top-level signal object contains.
-
-> [!NOTE]
-> This page documents the **target signal schema**.
-> The schema already reserves `schedule`, `external`, and `iruka_signal` trigger types.
-> Not every trigger execution path is live yet. In particular, **external input is not enabled yet**.
 
 ## What a signal is
 
@@ -132,9 +125,11 @@ Cron expressions are interpreted in UTC.
 }
 ```
 
-This trigger type exists in the **target schema** for cases where your own authenticated system should wake the signal.
+This trigger type exists for cases where your own authenticated system should wake the signal.
 
-**Current status:** the schema supports this shape, but the public external input flow is not enabled yet.
+> [!NOTE]
+> `external` is not live yet.
+> The schema supports this shape, but the public external input flow is not enabled yet.
 
 #### Signal-to-signal trigger
 
@@ -174,7 +169,8 @@ Current public delivery shape:
 }
 ```
 
-Telegram is the only public delivery target documented here today.
+Telegram is the only public delivery target supported in the signal schema today.
+The field stays an array so the model can support additional targets later.
 
 ### `metadata`
 

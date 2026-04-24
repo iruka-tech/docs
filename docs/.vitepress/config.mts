@@ -34,7 +34,6 @@ export default defineConfig({
       {
         text: 'Reference',
         items: [
-          { text: 'Auth', link: '/reference/auth' },
           { text: 'API Reference', link: '/reference/api' },
         ],
       },
