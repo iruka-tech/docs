@@ -103,10 +103,6 @@ Current outer shape:
     }
   ],
   "definition": {
-    "scope": {
-      "chains": [1],
-      "protocol": "all"
-    },
     "window": { "duration": "1h" },
     "conditions": [
       {
@@ -135,16 +131,11 @@ Current outer shape:
 }
 ```
 
-For entity-scoped signals, use `definition.scope.entities` to narrow the scope and `condition.entity_id` inside each condition.
+For entity-scoped signals, put the target directly on each condition with fields like `chain_id`, `entity_id`, and `address`.
 
 ```json
 {
   "definition": {
-    "scope": {
-      "chains": [1],
-      "protocol": "morpho",
-      "entities": ["0x2222222222222222222222222222222222222222222222222222222222222222"]
-    },
     "conditions": [
       {
         "type": "threshold",

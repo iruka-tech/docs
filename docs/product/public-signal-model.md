@@ -31,10 +31,6 @@ A signal has five top-level parts:
     }
   ],
   "definition": {
-    "scope": {
-      "chains": [1],
-      "addresses": ["0x1111111111111111111111111111111111111111"]
-    },
     "window": { "duration": "1h" },
     "logic": "AND",
     "conditions": [
@@ -144,13 +140,8 @@ Use this when another Iruka signal should wake this signal.
 
 `definition` is the query that Iruka evaluates.
 
-> [!NOTE]
-> The current `definition` examples still include `scope` because that is what the backend expects today.
-> Treat `scope` as legacy and likely to be deprecated later.
-
 It contains:
 
-- `scope`
 - `window`
 - `logic`
 - `conditions`

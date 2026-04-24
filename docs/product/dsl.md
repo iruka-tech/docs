@@ -27,10 +27,6 @@ A threshold condition compares one evaluated value against a target.
 
 ```json
 {
-  "scope": {
-    "chains": [1],
-    "addresses": ["0x1111111111111111111111111111111111111111"]
-  },
   "window": { "duration": "1h" },
   "conditions": [
     {
@@ -78,10 +74,7 @@ A change condition checks movement over time instead of only the current value.
 
 ```json
 {
-  "scope": {
-    "chains": [1],
-    "addresses": ["0x1111111111111111111111111111111111111111"]
-  },
+  "window": { "duration": "24h" },
   "conditions": [
     {
       "type": "change",
@@ -105,10 +98,6 @@ Use this when one signal should watch many addresses and alert if enough of them
 
 ```json
 {
-  "scope": {
-    "chains": [1],
-    "addresses": ["0xaaa...", "0xbbb...", "0xccc..."]
-  },
   "conditions": [
     {
       "type": "group_threshold",
@@ -134,10 +123,6 @@ Use this when you want to count decoded events over a rolling window.
 
 ```json
 {
-  "scope": {
-    "chains": [1],
-    "protocol": "all"
-  },
   "window": { "duration": "1h" },
   "conditions": [
     {

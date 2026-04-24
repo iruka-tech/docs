@@ -76,10 +76,6 @@ That means the same trigger can reach a human chat and your own system.
     }
   ],
   "definition": {
-    "scope": {
-      "chains": [1],
-      "addresses": ["0x1111111111111111111111111111111111111111"]
-    },
     "window": { "duration": "1h" },
     "conditions": [
       {
