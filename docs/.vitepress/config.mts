@@ -40,6 +40,7 @@ export default defineConfig({
       {
         text: 'Integrations',
         items: [
+          { text: 'Webhook Delivery', link: '/integrations/webhook-delivery' },
           { text: 'Telegram Delivery', link: '/integrations/telegram-delivery' },
         ],
       },

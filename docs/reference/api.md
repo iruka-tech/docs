@@ -126,7 +126,7 @@ Current outer shape:
     ]
   },
   "delivery": [
-    { "type": "telegram" }
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
   ],
   "metadata": {
     "description": "Optional",
@@ -223,7 +223,7 @@ If a user already knows another signal id, the user can add `type: "iruka_signal
 
 Delivery stays separate from trigger semantics.
 
-Current public delivery shape:
+Current public delivery shapes:
 
 ```json
 {
@@ -233,7 +233,32 @@ Current public delivery shape:
 }
 ```
 
-Even though Telegram is the only delivery target today, delivery remains an array to leave room for future fan-out.
+```json
+{
+  "delivery": [
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+Telegram target:
+- `{ "type": "telegram" }`
+
+Webhook target:
+- `{ "type": "webhook", "url": "https://your-app.example/webhook" }`
+
+Both can coexist in the same signal:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+Webhook deliveries use the normal Iruka alert payload and appear in signal history the same way other delivery attempts do.
 
 ## Metadata
 

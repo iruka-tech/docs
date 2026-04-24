@@ -32,6 +32,19 @@ Use this at signal creation time:
 }
 ```
 
+If you also want your own backend to receive the same alert, add a webhook target alongside Telegram:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+Telegram delivery and webhook delivery are independent targets in the same fan-out list.
+
 ## Link status and linking endpoints
 
 Iruka exposes two integration endpoints for the current authenticated user:
@@ -77,3 +90,4 @@ This keeps the bridge trusted even when the delivery process is separate from th
 ## What to read next
 
 - Read **API Reference** for signal creation and history routes
+- Read **Webhook Delivery** if you want Iruka to POST alerts into your own system
