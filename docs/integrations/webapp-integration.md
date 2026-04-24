@@ -13,31 +13,19 @@ That keeps the backend consistent while letting you build your own product surfa
 
 Use this split:
 
-- **Iruka backend** — signals, auth, sessions, API keys, history, delivery integration
-- **Your web app** — dashboards, forms, signal builders, account UX, team workflows
+- **Iruka API** — signals, API keys, history, and delivery integration
+- **Your web app** — dashboards, forms, signal builders, account UX, and team workflows
 
-Your frontend can call Iruka:
+Your product talks to Iruka through `https://api.hiruka.tech` with an API key generated from the Iruka console on `iruka.tech`.
 
-- directly from the browser using SIWE-backed sessions
-- through a thin backend-for-frontend if you need composition or extra policy checks
-
-## Browser auth flow
+## API access flow
 
 Recommended sequence:
 
-1. call `POST /api/v1/auth/siwe/nonce`
-2. sign the SIWE message in the wallet
-3. call `POST /api/v1/auth/siwe/verify`
-4. let Iruka own the session cookie
-5. call protected Iruka routes from the web app
-
-## API-key flow
-
-For server-side or machine integrations:
-
-1. call `POST /api/v1/auth/register`
-2. store the returned `api_key`
-3. call protected routes with `X-API-Key`
+1. sign in on `iruka.tech`
+2. open the Iruka console
+3. generate an API key
+4. call protected routes with `X-API-Key`
 
 ## Typical frontend responsibilities
 
@@ -56,9 +44,8 @@ A frontend on top of Iruka usually handles:
 
 Iruka should remain the source of truth for:
 
-- signal ownership
-- auth sessions
 - API key ownership
+- signal ownership
 - signal evaluation semantics
 - trigger execution semantics
 - repeat policy behavior
@@ -130,7 +117,7 @@ This gives you a cleaner builder split:
 
 ## What to read next
 
-- Read **Auth** for SIWE and API-key details
+- Read **Auth** for API-key details
 - Read **API Reference** for route-level behavior
 - Read **Definition** for the query part of the signal
 - Read **Telegram Delivery** if you want first-party operator notifications

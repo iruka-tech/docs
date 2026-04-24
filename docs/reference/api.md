@@ -2,12 +2,10 @@
 
 This page documents the public HTTP surface for integrators.
 
-Base URL examples in this page use a placeholder Iruka environment:
+Base URL for the public API:
 
-- API root: `<your_iruka_base_url>`
-- API namespace: `<your_iruka_base_url>/api/v1`
-
-Use the environment URL provided to your team.
+- API root: `https://api.hiruka.tech`
+- API namespace: `https://api.hiruka.tech/api/v1`
 
 ## Public endpoints
 
@@ -16,9 +14,6 @@ Use the environment URL provided to your team.
 | GET | `/health` | Fast liveness check |
 | GET | `/chains` | Supported chain report |
 | GET | `/ready` | Dependency readiness check |
-| POST | `/api/v1/auth/register` | Create a user and API key |
-| POST | `/api/v1/auth/siwe/nonce` | Issue a SIWE nonce |
-| POST | `/api/v1/auth/siwe/verify` | Verify a SIWE message and create a session |
 | GET | `/api/v1/catalog` | Return the backend-supported signal template catalog |
 
 ## Protected endpoints
@@ -210,7 +205,7 @@ Common examples:
 }
 ```
 
-This shape is part of the target schema.
+This trigger type is part of the target schema.
 Public external input is not enabled yet.
 
 ### Signal-to-signal trigger
@@ -359,8 +354,7 @@ For group results:
 
 ### `POST /api/v1/signals/:id/trigger`
 
-This route is part of the target model for future `external` trigger support.
-
+This route belongs to the `external` trigger type.
 It is **not a live public integration path yet**.
 Do not build against it yet.
 

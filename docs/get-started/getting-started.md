@@ -1,30 +1,23 @@
 # Getting Started
 
-This guide is for integrators using an Iruka environment provided by our team.
-
-You do **not** need to run the backend yourself to evaluate the product or ship an integration.
-
 ## What you need
 
 Before you start, make sure you have:
 
-- your Iruka **base URL**
-- either an **API key** or access to **SIWE login**
+- your Iruka API base URL: `https://api.hiruka.tech`
+- an API key generated from the Iruka console on `iruka.tech`
 - a linked Telegram account if you plan to use Telegram delivery
 
-In the examples below, replace:
-
-- `<your_iruka_base_url>` with your Iruka environment URL
-- `<your_api_key>` with your real API key
+In the examples below, replace `<your_api_key>` with your real API key.
 
 ## Step 1: confirm the environment
 
-Check that the environment is reachable and see what chains are enabled.
+Check that the API is reachable and see what chains are enabled.
 
 ```bash
-curl -sS <your_iruka_base_url>/health
-curl -sS <your_iruka_base_url>/chains
-curl -sS <your_iruka_base_url>/api/v1/catalog
+curl -sS https://api.hiruka.tech/health
+curl -sS https://api.hiruka.tech/chains
+curl -sS https://api.hiruka.tech/api/v1/catalog
 ```
 
 These endpoints tell you:
@@ -33,28 +26,15 @@ These endpoints tell you:
 - `/chains` — which chains this environment supports
 - `/api/v1/catalog` — the currently supported signal template catalog
 
-## Step 2: choose your auth model
+## Step 2: get an API key
 
-### Option A: API key
-
-Use API keys for:
-
-- backend-to-backend integrations
-- cron jobs and automation
-- internal services
-- products that create or fire signals programmatically
+Sign in on `iruka.tech`, open the Iruka console, and generate an API key there.
 
 Send protected requests with:
 
 ```http
 X-API-Key: iruka_...
 ```
-
-### Option B: SIWE session
-
-Use SIWE if your product has a wallet-connected frontend and you want browser-native authenticated flows.
-
-Read **Auth** for the full SIWE flow.
 
 ## Step 3: create your first signal
 
@@ -63,7 +43,7 @@ This example creates a scheduled threshold signal that watches a Morpho position
 ### Option A: interval schedule
 
 ```bash
-curl -sS -X POST <your_iruka_base_url>/api/v1/signals \
+curl -sS -X POST https://api.hiruka.tech/api/v1/signals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <your_api_key>" \
   -d '{
@@ -129,13 +109,13 @@ That example runs every day at **08:00 UTC**. Use standard **five-field** cron s
 Useful follow-up routes:
 
 ```bash
-curl -sS <your_iruka_base_url>/api/v1/signals \
+curl -sS https://api.hiruka.tech/api/v1/signals \
   -H "X-API-Key: <your_api_key>"
 
-curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id> \
+curl -sS https://api.hiruka.tech/api/v1/signals/<signal_id> \
   -H "X-API-Key: <your_api_key>"
 
-curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id>/history \
+curl -sS https://api.hiruka.tech/api/v1/signals/<signal_id>/history \
   -H "X-API-Key: <your_api_key>"
 ```
 
@@ -144,6 +124,6 @@ curl -sS <your_iruka_base_url>/api/v1/signals/<signal_id>/history \
 - **Signal** for the target signal schema
 - **Definition** for the query structure
 - **Examples** for condition examples
-- **Auth** for API keys and SIWE sessions
+- **Auth** for API key usage
 - **API Reference** for routes and payloads
 - **Webapp Integration** if you are embedding Iruka into a frontend product
