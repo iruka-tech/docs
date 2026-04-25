@@ -97,6 +97,48 @@ If you want both human alerts and machine-readable delivery, use both targets:
 }
 ```
 
+If you want a simple first signal, start with a threshold or a change condition.
+
+Example: notify when a USDC balance drops 20% in 2 hours.
+
+```json
+{
+  "version": "1",
+  "name": "USDC balance down 20% in 2h",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
+  "definition": {
+    "window": { "duration": "2h" },
+    "conditions": [
+      {
+        "type": "change",
+        "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+        "chain_id": 1,
+        "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "address": "0x1111111111111111111111111111111111111111",
+        "direction": "decrease",
+        "by": { "percent": 20 }
+      }
+    ]
+  },
+  "delivery": [
+    {
+      "type": "webhook",
+      "url": "https://antonmyown.dev/webhook/iruka"
+    }
+  ]
+}
+```
+
+That works because Iruka uses archive RPC reads for state-based `change` conditions, so it can compare the current balance to the balance at `window_start`.
+
 ### Option B: cron schedule
 
 Use cron when the signal should wake at a fixed UTC time instead of every N seconds.

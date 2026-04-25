@@ -55,6 +55,13 @@ Rules:
 
 A change condition checks movement over time instead of only the current value.
 
+Iruka evaluates this by reading the same state leaf twice:
+
+- `current`
+- `window_start`
+
+That historical read is powered by archive RPC access.
+
 ### Condition object
 
 ```json
@@ -89,6 +96,59 @@ A change condition checks movement over time instead of only the current value.
   ]
 }
 ```
+
+### More change examples
+
+#### ERC20 balance down 20% in 2h
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+  "chain_id": 1,
+  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "address": "0x1111111111111111111111111111111111111111",
+  "direction": "decrease",
+  "by": { "percent": 20 },
+  "window": { "duration": "2h" }
+}
+```
+
+Meaning: current token balance is down at least 20% versus 2 hours ago.
+
+#### ERC20 balance up by an absolute amount in 30m
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+  "chain_id": 1,
+  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "address": "0x1111111111111111111111111111111111111111",
+  "direction": "increase",
+  "by": { "absolute": "500000000" },
+  "window": { "duration": "30m" }
+}
+```
+
+Meaning: current token balance is up by at least `500000000` base units versus 30 minutes ago.
+
+#### ERC4626 shares down 10% in 24h
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC4626.Position.shares" },
+  "chain_id": 1,
+  "contract_address": "0xVaultAddress",
+  "address": "0xOwnerAddress",
+  "direction": "decrease",
+  "by": { "percent": 10 },
+  "window": { "duration": "24h" }
+}
+```
+
+Meaning: current ERC-4626 share balance is down at least 10% versus 24 hours ago.
 
 ---
 

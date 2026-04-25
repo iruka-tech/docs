@@ -99,6 +99,31 @@ ERC20 is the simplest example to read first because there is no market-style `en
 
 Some condition types can override `window` locally.
 
+For `change` conditions, this window is especially important: Iruka reads the current value and compares it to the value at the start of the window.
+
+That means a definition window of `2h` turns a change condition into "current value vs 2 hours ago".
+
+## Time-travel state reads
+
+`change` conditions for state-based sources are powered by archive RPC access.
+
+In practice, Iruka does two reads for the same state leaf:
+
+- `current`
+- `window_start`
+
+For example, an ERC-20 balance change signal reads:
+
+- current `balanceOf(address)` now
+- historical `balanceOf(address)` at the start of the window
+
+This is what lets you express rules like:
+
+- notify me when this ERC-20 balance is down 20% in the last 2 hours
+- notify me when this ERC-4626 share balance increased by 10% in the last day
+
+Today, `change` is the main public condition type that depends on archive RPC-backed historical state reads.
+
 ## `logic`
 
 `logic` defines how multiple conditions combine.
@@ -124,6 +149,28 @@ Each condition checks one thing, such as:
 - value changed over time
 - grouped matches across many addresses
 - event count over a rolling window
+
+The two condition families most users should learn first are:
+
+- `threshold` — compare one evaluated value to a target now
+- `change` — compare the current value to the value at `window_start`
+
+Example `change` condition:
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+  "chain_id": 1,
+  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "address": "0x1111111111111111111111111111111111111111",
+  "direction": "decrease",
+  "by": { "percent": 20 },
+  "window": { "duration": "2h" }
+}
+```
+
+That means: current ERC-20 balance is down at least 20% versus 2 hours ago.
 
 A threshold example belongs here, not at the top level.
 

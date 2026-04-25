@@ -6,6 +6,13 @@ This page explains what a signal is and what the top-level signal object contain
 
 A signal is a saved monitoring rule.
 
+A common pattern is a state-based `change` condition, such as:
+
+- notify me when this ERC-20 balance is down 20% in the last 2 hours
+- notify me when this ERC-4626 share balance increased in the last day
+
+Those work because Iruka can compare the current state read to the state at the start of the signal window.
+
 A signal has five top-level parts:
 
 - `version`
