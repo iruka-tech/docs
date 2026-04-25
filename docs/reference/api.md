@@ -328,7 +328,7 @@ Evaluations and notifications are independent timelines. If you need stable pagi
 
 The response includes:
 
-- `evaluations` — evaluation history, including `condition_results`, `conditions_met`, `logic`, `scope`, and `wake_context`
+- `evaluations` — evaluation history, including `condition_results`, `conditions_met`, `logic`, any synthesized execution `scope`, and `wake_context`
 - `notifications` — notification history, unless `include_notifications=false`
 - `count` — number of rows returned in this page
 - `pagination` — `limit`, current `offset`, and `next_offset` for evaluations and notifications
