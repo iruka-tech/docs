@@ -79,6 +79,9 @@ It is useful when you want your UI to present backend-native templates instead o
 
 This endpoint accepts the full signal envelope.
 
+A successful create returns the saved signal plus a top-level `complexity_score`.
+If the signal would push the authenticated user over the active complexity budget, the API returns a structured `400` error instead of creating it.
+
 A valid request must include:
 
 - `version`
@@ -273,6 +276,71 @@ Supported repeat policies:
 - `cooldown`
 - `post_first_alert_snooze`
 - `until_resolved`
+
+## Signal responses
+
+`POST /api/v1/signals`, `GET /api/v1/signals`, `GET /api/v1/signals/:id`, `PATCH /api/v1/signals/:id`, and `PATCH /api/v1/signals/:id/toggle` all use the same saved-signal response shape.
+
+Example:
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "version": "1",
+  "name": "High transfer count",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
+  "definition": {
+    "window": { "duration": "1h" },
+    "conditions": []
+  },
+  "delivery": [
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ],
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": { "mode": "cooldown" }
+  },
+  "complexity_score": 13,
+  "is_active": true,
+  "created_at": "2026-04-23T00:00:00.000Z",
+  "updated_at": "2026-04-23T00:00:00.000Z",
+  "last_evaluated_at": null,
+  "last_fired_at": null
+}
+```
+
+`complexity_score` is always included in saved-signal responses.
+Today it is derived from existing signal fields only:
+
+- interval schedule contribution: `ceil(3600 / interval_seconds)`
+- condition contribution: `+1` per condition
+- signals without an interval schedule currently return `0`
+
+## Active complexity budget errors
+
+When create, update, or toggle-on would exceed the authenticated user's active complexity budget, the API returns `400` with a structured payload like:
+
+```json
+{
+  "error": "Active complexity budget exceeded",
+  "code": "active_complexity_budget_exceeded",
+  "projected_complexity": 28,
+  "tier_maximum": 20,
+  "current_complexity": 14
+}
+```
+
+- `projected_complexity` = what the user's active total would become after the requested change
+- `tier_maximum` = the current allowed budget for that user's tier
+- `current_complexity` = current active total when available
 
 ## List and fetch signals
 
