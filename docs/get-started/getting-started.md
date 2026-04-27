@@ -157,6 +157,8 @@ That example runs every day at **08:00 UTC**. Use standard **five-field** cron s
 
 ## Step 4: inspect what you created
 
+Saved-signal responses now include a top-level `complexity_score`, so you can immediately see how expensive a signal is from the API response itself.
+
 Useful follow-up routes:
 
 ```bash
@@ -169,6 +171,9 @@ curl -sS https://api.hiruka.tech/api/v1/signals/<signal_id> \
 curl -sS https://api.hiruka.tech/api/v1/signals/<signal_id>/history \
   -H "X-API-Key: <your_api_key>"
 ```
+
+Saved-signal responses now include a top-level `complexity_score`, so a successful create/read response tells you how expensive that signal currently is.
+If create, update, or toggle-on would exceed your active complexity budget, the API returns a structured `400` error with `code = "active_complexity_budget_exceeded"` plus numeric budget fields.
 
 ## What to read next
 

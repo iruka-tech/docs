@@ -13,7 +13,7 @@ A common pattern is a state-based `change` condition, such as:
 
 Those work because Iruka can compare the current state read to the state at the start of the signal window.
 
-A signal has five top-level parts:
+A signal has six top-level request parts:
 
 - `version`
 - `name`
@@ -21,6 +21,13 @@ A signal has five top-level parts:
 - `definition`
 - `delivery`
 - `metadata`
+
+When Iruka returns a saved signal from the API, it also adds response-only fields such as:
+
+- `id`
+- `complexity_score`
+- `is_active`
+- timestamps like `created_at`, `updated_at`, `last_evaluated_at`, and `last_fired_at`
 
 ## Top-level shape
 
@@ -210,6 +217,23 @@ Supported repeat policies:
 - `cooldown`
 - `post_first_alert_snooze`
 - `until_resolved`
+
+## Response-only signal fields
+
+When you fetch or create a saved signal through the API, Iruka adds top-level response fields beyond the request envelope.
+
+Important ones:
+
+- `id` — saved signal id
+- `complexity_score` — current per-signal complexity derived from the signal shape
+- `is_active` — whether the signal is active now
+- `created_at`, `updated_at`, `last_evaluated_at`, `last_fired_at`
+
+`complexity_score` is currently derived from the existing request fields only:
+
+- interval schedule contribution: `ceil(3600 / interval_seconds)`
+- condition contribution: `+1` per condition
+- signals without an interval schedule currently return `0`
 
 ## What to read next
 
