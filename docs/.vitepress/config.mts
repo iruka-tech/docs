@@ -14,7 +14,7 @@ export default defineConfig({
       {
         text: 'Overview',
         items: [
-          { text: 'Iruka for Integrators', link: '/' },
+          { text: 'Introduction', link: '/' },
         ],
       },
       {
