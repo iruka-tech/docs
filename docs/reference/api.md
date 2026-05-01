@@ -138,6 +138,8 @@ For entity-scoped signals, put the target directly on each condition with fields
 
 State-based `change` conditions depend on archive RPC access. Iruka evaluates those by comparing the current state read to the same state read at `window_start`.
 
+LP pool state reads use raw `state_ref` conditions because they need protocol-specific filters such as `poolId` and `tokenIndex`. Supported LP state targets are `uniswap_v2 Pool.reserve0/reserve1`, `uniswap_v3 Pool.liquidity`, `uniswap_v4 PoolManager.liquidity`, and `curve Pool.balance`.
+
 ```json
 {
   "definition": {

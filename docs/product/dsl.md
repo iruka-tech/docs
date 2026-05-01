@@ -177,7 +177,52 @@ Use this when one signal should watch many addresses and alert if enough of them
 
 ---
 
-## Example 4: raw event count
+## Example 4: LP pool liquidity change
+
+Use raw `state_ref` for LP pool reads. This example alerts only when both pools for the same pair are down at least 20% over the same window.
+
+```json
+{
+  "window": { "duration": "1h" },
+  "logic": "AND",
+  "conditions": [
+    {
+      "type": "change",
+      "state_ref": {
+        "type": "state",
+        "protocol": "uniswap_v3",
+        "entity_type": "Pool",
+        "field": "liquidity",
+        "filters": [
+          { "field": "chainId", "op": "eq", "value": 1 },
+          { "field": "contractAddress", "op": "eq", "value": "0xUniswapV3Pool005" }
+        ]
+      },
+      "direction": "decrease",
+      "by": { "percent": 20 }
+    },
+    {
+      "type": "change",
+      "state_ref": {
+        "type": "state",
+        "protocol": "uniswap_v3",
+        "entity_type": "Pool",
+        "field": "liquidity",
+        "filters": [
+          { "field": "chainId", "op": "eq", "value": 1 },
+          { "field": "contractAddress", "op": "eq", "value": "0xUniswapV3Pool030" }
+        ]
+      },
+      "direction": "decrease",
+      "by": { "percent": 20 }
+    }
+  ]
+}
+```
+
+You can mix protocol families in the same signal. For example, one condition can read Uniswap v3 `Pool.liquidity` while another reads Uniswap v4 `PoolManager.liquidity` with a `poolId`.
+
+## Example 5: raw event count
 
 Use this when you want to count decoded events over a rolling window.
 

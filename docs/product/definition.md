@@ -23,8 +23,12 @@ Current supported protocol families in the public docs are:
 - `Morpho`
 - `ERC4626`
 - `ERC20`
+- `uniswap_v2`
+- `uniswap_v3`
+- `uniswap_v4`
+- `curve`
 
-Current protocol/entity shapes:
+Current alias-backed protocol/entity shapes:
 
 - `Morpho.Position`
 - `Morpho.Market`
@@ -40,9 +44,16 @@ Use those through `source.kind = "alias"` names such as:
 - `ERC4626.Position.shares`
 - `ERC20.Position.balance`
 
-> [!NOTE]
-> We plan to generalize this further over time so signals can target broader function- and event-level inputs.
-> For now, the clearest public starting point is the current alias-based protocol set above.
+LP pool reads are lower-level raw `state_ref` inputs, not aliases:
+
+| Protocol | Entity | Field | Required filters |
+| --- | --- | --- | --- |
+| `uniswap_v2` | `Pool` | `reserve0`, `reserve1` | `chainId`, `contractAddress` |
+| `uniswap_v3` | `Pool` | `liquidity` | `chainId`, `contractAddress` |
+| `uniswap_v4` | `PoolManager` | `liquidity` | `chainId`, `contractAddress`, `poolId` |
+| `curve` | `Pool` | `balance` | `chainId`, `contractAddress`, `tokenIndex` |
+
+These LP fields return raw contract integers/liquidity units. They are not USD liquidity, token-decimal-normalized TVL, or derived pool math. Curve support is `balances(uint256 index)`.
 
 ## How to think about entities
 
@@ -53,6 +64,9 @@ Today:
 - **Morpho** uses `Position`, `Market`, `Event`, and `Flow`
 - **ERC4626** uses `Position`
 - **ERC20** uses `Position`
+- **Uniswap v2/v3** use `Pool`
+- **Uniswap v4** uses `PoolManager`
+- **Curve** uses `Pool`
 
 That means the required condition inputs differ by protocol.
 
@@ -61,6 +75,9 @@ For example:
 - **Morpho.Position** usually needs a market target plus a user address
 - **ERC4626.Position** needs a vault contract plus an owner address
 - **ERC20.Position** needs a token contract plus a holder address
+- **Uniswap v2/v3 Pool** reads need a pool contract
+- **Uniswap v4 PoolManager** reads need the PoolManager contract plus a `poolId`
+- **Curve Pool** reads need the pool contract plus a `tokenIndex`
 
 ERC20 is the simplest example to read first because there is no market-style `entity_id` in the public condition shape. You mainly provide:
 
@@ -86,6 +103,33 @@ ERC20 is the simplest example to read first because there is no market-style `en
   ]
 }
 ```
+
+## Raw LP pool state refs
+
+Use `state_ref` when the source needs protocol-specific filters that alias shorthand cannot carry.
+
+Example: alert when a Uniswap v3 pool's raw `liquidity()` value drops 20% over one hour.
+
+```json
+{
+  "type": "change",
+  "state_ref": {
+    "type": "state",
+    "protocol": "uniswap_v3",
+    "entity_type": "Pool",
+    "field": "liquidity",
+    "filters": [
+      { "field": "chainId", "op": "eq", "value": 1 },
+      { "field": "contractAddress", "op": "eq", "value": "0xUniswapV3Pool" }
+    ]
+  },
+  "direction": "decrease",
+  "by": { "percent": 20 },
+  "window": { "duration": "1h" }
+}
+```
+
+For Uniswap v4, the contract address is the PoolManager and the pool is selected by `poolId`. For Curve, select the reserve with `tokenIndex`.
 
 ## `window`
 
