@@ -4,7 +4,7 @@
 
 Before you start, make sure you have:
 
-- your Iruka API base URL: `https://api.hiruka.tech`
+- your Iruka API base URL: `https://api.iruka.tech`
 - an API key generated from the Iruka console on `iruka.tech`
 - a linked Telegram account if you plan to use Telegram delivery
 - a public HTTPS endpoint if you plan to use webhook delivery
@@ -16,9 +16,9 @@ In the examples below, replace `<your_api_key>` with your real API key.
 Check that the API is reachable and see what chains are enabled.
 
 ```bash
-curl -sS https://api.hiruka.tech/health
-curl -sS https://api.hiruka.tech/chains
-curl -sS https://api.hiruka.tech/api/v1/catalog
+curl -sS https://api.iruka.tech/health
+curl -sS https://api.iruka.tech/chains
+curl -sS https://api.iruka.tech/api/v1/catalog
 ```
 
 These endpoints tell you:
@@ -44,7 +44,7 @@ This example creates a scheduled threshold signal that watches an ERC20 balance 
 ### Option A: interval schedule
 
 ```bash
-curl -sS -X POST https://api.hiruka.tech/api/v1/signals \
+curl -sS -X POST https://api.iruka.tech/api/v1/signals \
   -H "Content-Type: application/json" \
   -H "X-API-Key: <your_api_key>" \
   -d '{
@@ -162,13 +162,13 @@ Saved-signal responses now include a top-level `complexity_score`, so you can im
 Useful follow-up routes:
 
 ```bash
-curl -sS https://api.hiruka.tech/api/v1/signals \
+curl -sS https://api.iruka.tech/api/v1/signals \
   -H "X-API-Key: <your_api_key>"
 
-curl -sS https://api.hiruka.tech/api/v1/signals/<signal_id> \
+curl -sS https://api.iruka.tech/api/v1/signals/<signal_id> \
   -H "X-API-Key: <your_api_key>"
 
-curl -sS https://api.hiruka.tech/api/v1/signals/<signal_id>/history \
+curl -sS https://api.iruka.tech/api/v1/signals/<signal_id>/history \
   -H "X-API-Key: <your_api_key>"
 ```
 

@@ -4,8 +4,8 @@ This page documents the public HTTP surface for integrators.
 
 Base URL for the public API:
 
-- API root: `https://api.hiruka.tech`
-- API namespace: `https://api.hiruka.tech/api/v1`
+- API root: `https://api.iruka.tech`
+- API namespace: `https://api.iruka.tech/api/v1`
 
 ## Public endpoints
 
