@@ -111,7 +111,7 @@ At a high level, expect fields like:
 - `signal_name`
 - `triggered_at`
 - `summary`
-- `scope` (synthesized from the signal's explicit condition targeting, not authored via `definition.scope`)
+- `scope` (synthesized from the signal's explicit condition targeting)
 - `conditions_met`
 - `wake_context`
 - `context`
