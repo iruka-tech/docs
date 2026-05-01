@@ -16,8 +16,8 @@ A threshold condition compares one evaluated value against a target.
   "type": "threshold",
   "source": { "kind": "alias", "name": "ERC20.Position.balance" },
   "chain_id": 1,
-  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-  "address": "0x1111111111111111111111111111111111111111",
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
   "operator": ">",
   "value": "1000000000"
 }
@@ -33,8 +33,8 @@ A threshold condition compares one evaluated value against a target.
       "type": "threshold",
       "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-      "address": "0x1111111111111111111111111111111111111111",
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "account": "0x1111111111111111111111111111111111111111",
       "operator": ">",
       "value": "1000000000"
     }
@@ -69,8 +69,8 @@ That historical read is powered by archive RPC access.
   "type": "change",
   "source": { "kind": "alias", "name": "ERC20.Position.balance" },
   "chain_id": 1,
-  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-  "address": "0x1111111111111111111111111111111111111111",
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
   "direction": "decrease",
   "by": { "percent": 10 },
   "window": { "duration": "24h" }
@@ -87,8 +87,8 @@ That historical read is powered by archive RPC access.
       "type": "change",
       "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-      "address": "0x1111111111111111111111111111111111111111",
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "account": "0x1111111111111111111111111111111111111111",
       "direction": "decrease",
       "by": { "percent": 10 },
       "window": { "duration": "24h" }
@@ -106,8 +106,8 @@ That historical read is powered by archive RPC access.
   "type": "change",
   "source": { "kind": "alias", "name": "ERC20.Position.balance" },
   "chain_id": 1,
-  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-  "address": "0x1111111111111111111111111111111111111111",
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
   "direction": "decrease",
   "by": { "percent": 20 },
   "window": { "duration": "2h" }
@@ -123,8 +123,8 @@ Meaning: current token balance is down at least 20% versus 2 hours ago.
   "type": "change",
   "source": { "kind": "alias", "name": "ERC20.Position.balance" },
   "chain_id": 1,
-  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-  "address": "0x1111111111111111111111111111111111111111",
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
   "direction": "increase",
   "by": { "absolute": "500000000" },
   "window": { "duration": "30m" }
@@ -140,8 +140,8 @@ Meaning: current token balance is up by at least `500000000` base units versus 3
   "type": "change",
   "source": { "kind": "alias", "name": "ERC4626.Position.shares" },
   "chain_id": 1,
-  "contract_address": "0xVaultAddress",
-  "address": "0xOwnerAddress",
+  "token": "0xVaultAddress",
+  "account": "0xOwnerAddress",
   "direction": "decrease",
   "by": { "percent": 10 },
   "window": { "duration": "24h" }
@@ -163,7 +163,7 @@ Use this when one signal should watch many addresses and alert if enough of them
       "type": "group_threshold",
       "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       "operator": ">",
       "value": "1000000000",
       "group": {

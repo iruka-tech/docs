@@ -81,8 +81,8 @@ For example:
 
 ERC20 is the simplest example to read first because there is no market-style `entity_id` in the public condition shape. You mainly provide:
 
-- `contract_address` — which token
-- `address` — which holder
+- `token` — which token contract
+- `account` — which holder account
 
 ## `definition` example
 
@@ -95,8 +95,8 @@ ERC20 is the simplest example to read first because there is no market-style `en
       "type": "threshold",
       "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-      "address": "0x1111111111111111111111111111111111111111",
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "account": "0x1111111111111111111111111111111111111111",
       "operator": ">",
       "value": "1000000000"
     }
@@ -158,8 +158,8 @@ In practice, Iruka does two reads for the same state leaf:
 
 For example, an ERC-20 balance change signal reads:
 
-- current `balanceOf(address)` now
-- historical `balanceOf(address)` at the start of the window
+- current `balanceOf(account)` now
+- historical `balanceOf(account)` at the start of the window
 
 This is what lets you express rules like:
 
@@ -206,8 +206,8 @@ Example `change` condition:
   "type": "change",
   "source": { "kind": "alias", "name": "ERC20.Position.balance" },
   "chain_id": 1,
-  "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-  "address": "0x1111111111111111111111111111111111111111",
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
   "direction": "decrease",
   "by": { "percent": 20 },
   "window": { "duration": "2h" }
@@ -225,8 +225,8 @@ A threshold example belongs here, not at the top level.
       "type": "threshold",
       "source": { "kind": "alias", "name": "ERC20.Position.balance" },
       "chain_id": 1,
-      "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-      "address": "0x1111111111111111111111111111111111111111",
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "account": "0x1111111111111111111111111111111111111111",
       "operator": ">",
       "value": "1000000000"
     }
