@@ -52,8 +52,8 @@ When Iruka returns a saved signal from the API, it also adds response-only field
         "type": "threshold",
         "source": { "kind": "alias", "name": "ERC20.Position.balance" },
         "chain_id": 1,
-        "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        "address": "0x1111111111111111111111111111111111111111",
+        "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "account": "0x1111111111111111111111111111111111111111",
         "operator": ">",
         "value": "1000000000"
       }

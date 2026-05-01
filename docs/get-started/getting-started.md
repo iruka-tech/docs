@@ -66,8 +66,8 @@ curl -sS -X POST https://api.hiruka.tech/api/v1/signals \
           "type": "threshold",
           "source": { "kind": "alias", "name": "ERC20.Position.balance" },
           "chain_id": 1,
-          "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-          "address": "0x1111111111111111111111111111111111111111",
+          "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "account": "0x1111111111111111111111111111111111111111",
           "operator": ">",
           "value": "1000000000"
         }
@@ -121,8 +121,8 @@ Example: notify when a USDC balance drops 20% in 2 hours.
         "type": "change",
         "source": { "kind": "alias", "name": "ERC20.Position.balance" },
         "chain_id": 1,
-        "contract_address": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        "address": "0x1111111111111111111111111111111111111111",
+        "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "account": "0x1111111111111111111111111111111111111111",
         "direction": "decrease",
         "by": { "percent": 20 }
       }

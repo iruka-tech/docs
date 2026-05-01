@@ -134,7 +134,7 @@ Current outer shape:
 }
 ```
 
-For entity-scoped signals, put the target directly on each condition with fields like `chain_id`, `entity_id`, and `address`.
+For entity-scoped signals, put the target directly on each condition with alias-specific fields: use `token` and `account` for `ERC20.Position.balance`/`ERC4626.Position.shares`, and keep `entity_id` for Morpho aliases.
 
 State-based `change` conditions depend on archive RPC access. Iruka evaluates those by comparing the current state read to the same state read at `window_start`.
 
