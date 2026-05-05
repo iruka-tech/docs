@@ -2,7 +2,7 @@
 
 Iruka meters active scheduled signals by **complexity units**. The goal is simple: users should understand how much monitoring capacity a signal consumes before they hit a limit.
 
-A signal's complexity is not based on how long the JSON is. It is based on how often Iruka evaluates it and how much upstream provider work each evaluation needs: current-state RPC reads, archive reads, and HyperSync/event queries.
+A signal's complexity is based on how often Iruka evaluates it and how much upstream provider work each evaluation needs: current-state RPC reads, archive reads, and HyperSync/event queries.
 
 ## Complexity units
 
@@ -35,13 +35,13 @@ Examples:
 | 10-minute interval, 1 raw-event condition | `ceil(3600 / 600) × 2` | `12` |
 | 5-minute interval, 3 current-state conditions | `ceil(3600 / 300) × 3` | `36` |
 
-## The pmUSD reference signal
+## Example: liquidity threshold
 
-A useful real-world reference is the pmUSD stress monitor:
+Suppose a signal:
 
 - checks every 10 minutes
 - has 1 threshold condition
-- watches whether crvUSD exit liquidity in the largest pmUSD/crvUSD Curve pool falls below a threshold
+- reads current liquidity for a pool or token account
 
 Its complexity is:
 
@@ -49,9 +49,9 @@ Its complexity is:
 ceil(3600 / 600) × 1 = 6
 ```
 
-So one pmUSD-style market-risk monitor costs **6 complexity units**.
+So one simple 10-minute liquidity threshold costs **6 complexity units**.
 
-## One-minute historical state example
+## Example: historical state change
 
 Suppose a signal:
 
@@ -107,18 +107,12 @@ Current production has a default active complexity limit of **25**. That is enou
 
 The intended paid plan baseline is:
 
-| Plan | Monthly price | Active complexity budget | Equivalent pmUSD monitors |
-| --- | ---: | ---: | ---: |
-| Free | $0 | 25 | about 4 |
-| Pro | $10 | 500 | about 83 |
+| Plan | Monthly price | Active complexity budget | Example capacity |
+| --- | ---: | ---: | --- |
+| Free | $0 | 25 | about 4 simple 10-minute threshold signals |
+| Pro | $10 | 500 | about 83 simple 10-minute threshold signals, or about 2 high-frequency historical-state signals |
 
-The Pro target is deliberately above **30×** the pmUSD reference signal:
-
-```text
-30 × 6 = 180
-```
-
-A 500-unit Pro budget gives room for at least 30 pmUSD-style monitors, or about 2 high-frequency 1-minute historical-state signals that cost 240 units each.
+A 500-unit Pro budget gives room for many low-frequency checks, while still charging high-frequency archive/event work proportionally.
 
 ## How to reduce complexity
 
@@ -150,6 +144,6 @@ This is the rollout path for turning the current internal limit into a user-faci
 4. **Add plan assignment.** Map users to Free or Pro through a single backend plan resolver. Keep the existing internal override separate for team/admin testing.
 5. **Wire billing after the product contract is stable.** Connect $10/month checkout and subscription status to the plan resolver only after the API and docs are stable.
 6. **Update the app UI.** Show current usage before signal creation and link limit errors to this page.
-7. **Monitor dogfood accounts.** Verify that Pro users can create at least 30 pmUSD-equivalent monitors without repurposing old signals.
+7. **Monitor dogfood accounts.** Verify that Pro users can create representative production workloads without repurposing old signals.
 
 The first backend PR should avoid billing tables and focus on making provider-work limits visible and understandable.
