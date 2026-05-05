@@ -52,8 +52,9 @@ LP pool reads are lower-level raw `state_ref` inputs, not aliases:
 | `uniswap_v3` | `Pool` | `liquidity`, `sqrtPriceX96` | `chainId`, `contractAddress` |
 | `uniswap_v4` | `PoolManager` | `liquidity` | `chainId`, `contractAddress`, `poolId` |
 | `curve` | `Pool` | `balance` | `chainId`, `contractAddress`, `tokenIndex` |
+| `curve` | `Pool` | `dy` | `chainId`, `contractAddress`, `i`, `j`, `dx` |
 
-These LP fields return raw contract integers/liquidity units. They are not USD liquidity, token-decimal-normalized TVL, or derived pool math. Curve support is `balances(uint256 index)`. Uniswap v3 `sqrtPriceX96` is the raw `slot0()` price field and can be used for pool-price thresholds after converting the human price into Uniswap's fixed-point format.
+These LP fields return raw contract integers/liquidity/quote units. They are not USD liquidity, token-decimal-normalized TVL, or derived pool math. Curve `Pool.balance` uses `balances(uint256 index)`, and Curve `Pool.dy` uses stable-style `get_dy(int128 i, int128 j, uint256 dx)`. Uniswap v3 `sqrtPriceX96` is the raw `slot0()` price field and can be used for pool-price thresholds after converting the human price into Uniswap's fixed-point format.
 
 ## How to think about entities
 
@@ -77,7 +78,7 @@ For example:
 - **ERC20.Position** needs a token contract plus a holder address
 - **Uniswap v2/v3 Pool** reads need a pool contract
 - **Uniswap v4 PoolManager** reads need the PoolManager contract plus a `poolId`
-- **Curve Pool** reads need the pool contract plus a `tokenIndex`
+- **Curve Pool** balance reads need the pool contract plus a `tokenIndex`; quote reads need `i`, `j`, and raw `dx`
 
 ERC20 is the simplest example to read first because there is no market-style `entity_id` in the public condition shape. You mainly provide:
 
