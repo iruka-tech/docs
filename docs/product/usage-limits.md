@@ -130,20 +130,28 @@ If you hit a usage limit, reduce the amount of scheduled work Iruka needs to run
 
 Saved-signal responses include `complexity_score`, so a successful create or read tells you how expensive that signal is.
 
-When create, update, or activation would exceed the active complexity budget, the API returns a structured `400` error with `code = "active_complexity_budget_exceeded"` and numeric budget fields.
+Authenticated users can fetch their current limits:
+
+```http
+GET /api/v1/me/limits
+```
+
+The response includes:
+
+- plan key and name
+- active complexity used and limit
+- minimum schedule interval
+- formula version and docs URL
+
+When create, update, or activation would exceed the active complexity budget, the API returns a structured `400` error with `code = "active_complexity_budget_exceeded"`, numeric budget fields, `plan`, `signal_complexity`, and `docs_url`.
 
 See the API Reference for the exact response shape.
 
-## Production rollout plan
+## Remaining rollout
 
-This is the rollout path for turning the current internal limit into a user-facing plan system:
+Iruka now has provider-work complexity enforcement, a plan/limits response, and product-facing quota errors. Remaining work:
 
-1. **Keep current enforcement in place.** Apply the provider-work formula to future create, update, and activation checks. Existing active signals can keep running; if a user edits or reactivates them, Iruka checks them with the current formula.
-2. **Expose plan usage in the API.** Add an authenticated limits response that returns the user's plan, active complexity used, active complexity limit, minimum schedule interval, and a docs URL.
-3. **Improve limit errors.** Keep the existing error fields, then add product-facing fields such as `plan`, `signal_complexity`, and `docs_url` so the app can explain what happened.
-4. **Add plan assignment.** Map users to Free or Pro through a single backend plan resolver. Keep the existing internal override separate for team/admin testing.
-5. **Wire billing after the product contract is stable.** Connect $10/month checkout and subscription status to the plan resolver only after the API and docs are stable.
-6. **Update the app UI.** Show current usage before signal creation and link limit errors to this page.
-7. **Monitor dogfood accounts.** Verify that Pro users can create representative production workloads without repurposing old signals.
-
-The first backend PR should avoid billing tables and focus on making provider-work limits visible and understandable.
+1. **Add plan assignment.** Map users to Free or Pro through a backend plan resolver. Keep internal/admin overrides separate from billing status.
+2. **Wire billing after the product contract is stable.** Connect $10/month checkout and subscription status to the plan resolver.
+3. **Update the app UI.** Show current usage before signal creation and link limit errors to this page.
+4. **Monitor representative workloads.** Verify that Pro capacity fits real monitoring needs without making local incidents into public reference examples.
