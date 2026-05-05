@@ -49,11 +49,11 @@ LP pool reads are lower-level raw `state_ref` inputs, not aliases:
 | Protocol | Entity | Field | Required filters |
 | --- | --- | --- | --- |
 | `uniswap_v2` | `Pool` | `reserve0`, `reserve1` | `chainId`, `contractAddress` |
-| `uniswap_v3` | `Pool` | `liquidity` | `chainId`, `contractAddress` |
+| `uniswap_v3` | `Pool` | `liquidity`, `sqrtPriceX96` | `chainId`, `contractAddress` |
 | `uniswap_v4` | `PoolManager` | `liquidity` | `chainId`, `contractAddress`, `poolId` |
 | `curve` | `Pool` | `balance` | `chainId`, `contractAddress`, `tokenIndex` |
 
-These LP fields return raw contract integers/liquidity units. They are not USD liquidity, token-decimal-normalized TVL, or derived pool math. Curve support is `balances(uint256 index)`.
+These LP fields return raw contract integers/liquidity units. They are not USD liquidity, token-decimal-normalized TVL, or derived pool math. Curve support is `balances(uint256 index)`. Uniswap v3 `sqrtPriceX96` is the raw `slot0()` price field and can be used for pool-price thresholds after converting the human price into Uniswap's fixed-point format.
 
 ## How to think about entities
 
