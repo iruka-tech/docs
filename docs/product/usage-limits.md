@@ -45,6 +45,54 @@ ceil(3600 / 600) + 1 = 7
 
 So one pmUSD-style market-risk monitor costs **7 complexity units**.
 
+## One-minute historical state example
+
+Suppose a signal:
+
+- checks every 1 minute
+- has 2 top-level `change` conditions
+- each condition compares the current value against historical state at `window_start`
+- combines both conditions with `logic: "AND"`
+
+Its complexity is:
+
+```text
+ceil(3600 / 60) + 2 = 62
+```
+
+So this signal costs **62 complexity units**. The archive reads are part of the `change` condition evaluation; the current formula counts this as 2 top-level conditions, not as a separate charge per historical read.
+
+Example definition:
+
+```json
+{
+  "window": { "duration": "1h" },
+  "logic": "AND",
+  "conditions": [
+    {
+      "type": "change",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xA0b8...eb48",
+      "account": "0x1111111111111111111111111111111111111111",
+      "direction": "decrease",
+      "by": { "percent": 20 }
+    },
+    {
+      "type": "change",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xA0b8...eb48",
+      "account": "0x2222222222222222222222222222222222222222",
+      "direction": "decrease",
+      "by": { "percent": 20 }
+    }
+  ]
+}
+```
+
+With a 500-unit Pro budget, a user could run about **8** of these high-frequency historical-state signals at once.
+
 ## Plan limits
 
 Current production has a default active complexity limit of **25**. That is enough for a few lightweight monitors, but it is intentionally not enough for heavy professional monitoring.
@@ -54,7 +102,7 @@ The intended paid plan baseline is:
 | Plan | Monthly price | Active complexity budget | Equivalent pmUSD monitors |
 | --- | ---: | ---: | ---: |
 | Free | $0 | 25 | about 3 |
-| Pro | $10 | 250 | about 35 |
+| Pro | $10 | 500 | about 71 |
 
 The Pro target is deliberately above **30×** the pmUSD reference signal:
 
@@ -62,7 +110,7 @@ The Pro target is deliberately above **30×** the pmUSD reference signal:
 30 × 7 = 210
 ```
 
-A 250-unit Pro budget gives room for at least 30 pmUSD-style monitors plus some headroom for additional conditions or a few faster checks.
+A 500-unit Pro budget gives room for at least 30 pmUSD-style monitors, or about 8 high-frequency 1-minute historical-state signals that cost 62 units each.
 
 ## How to reduce complexity
 
