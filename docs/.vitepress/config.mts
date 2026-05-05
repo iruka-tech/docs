@@ -27,6 +27,7 @@ export default defineConfig({
         text: 'Product Guide',
         items: [
           { text: 'Signal', link: '/product/public-signal-model' },
+          { text: 'Usage Limits', link: '/product/usage-limits' },
           { text: 'Definition', link: '/product/definition' },
           { text: 'Examples', link: '/product/dsl' },
         ],

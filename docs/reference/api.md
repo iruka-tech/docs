@@ -326,6 +326,8 @@ Today it is derived from existing signal fields only:
 - condition contribution: `+1` per condition
 - signals without an interval schedule currently return `0`
 
+Read **Usage Limits** for the plan model, worked examples, and the $10/month Pro target budget.
+
 ## Active complexity budget errors
 
 When create, update, or toggle-on would exceed the authenticated user's active complexity budget, the API returns `400` with a structured payload like:

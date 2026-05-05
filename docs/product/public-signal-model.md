@@ -235,8 +235,11 @@ Important ones:
 - condition contribution: `+1` per condition
 - signals without an interval schedule currently return `0`
 
+Read **Usage Limits** for plan budgets, examples, and how to estimate active scheduled-signal usage.
+
 ## What to read next
 
+- Read **Usage Limits** for complexity units and plan budgets
 - Read **Definition** for what belongs inside `definition`
 - Read **Examples** for concrete condition examples
 - Read **API Reference** for routes and payloads
