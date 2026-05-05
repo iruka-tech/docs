@@ -173,7 +173,8 @@ curl -sS https://api.iruka.tech/api/v1/signals/<signal_id>/history \
 ```
 
 Saved-signal responses now include a top-level `complexity_score`, so a successful create/read response tells you how expensive that signal currently is.
-If create, update, or toggle-on would exceed your active complexity budget, the API returns a structured `400` error with `code = "active_complexity_budget_exceeded"` plus numeric budget fields.
+Use `GET /api/v1/me/limits` to fetch your plan, active complexity used, active complexity limit, minimum schedule interval, and formula docs URL.
+If create, update, or toggle-on would exceed your active complexity budget, the API returns a structured `400` error with `code = "active_complexity_budget_exceeded"`, numeric budget fields, `plan`, `signal_complexity`, and `docs_url`.
 
 For the plan model and examples, read **Usage Limits**. The short version: active scheduled signals consume `ceil(3600 / interval_seconds) × work_units_per_evaluation` complexity units, where work units estimate state reads, archive reads, and raw-event queries.
 

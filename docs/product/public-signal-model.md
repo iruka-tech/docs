@@ -232,8 +232,11 @@ Important ones:
 `complexity_score` is currently derived from the existing request fields only:
 
 - interval schedule contribution: `ceil(3600 / interval_seconds)`
-- condition contribution: `+1` per condition
-- signals without an interval schedule currently return `0`
+- provider-work contribution: `work_units_per_evaluation`
+- current state reads cost 1 work unit
+- historical state `change` conditions cost 2 work units
+- raw-event / HyperSync checks cost 2 work units
+- inactive or external-only signals currently return `0`
 
 Read **Usage Limits** for plan budgets, examples, and how to estimate active scheduled-signal usage.
 

@@ -22,6 +22,7 @@ Base URL for the public API:
 | --- | --- | --- |
 | GET | `/api/v1/auth/me` | Return the authenticated profile |
 | POST | `/api/v1/auth/logout` | Revoke the current session |
+| GET | `/api/v1/me/limits` | Return plan and active complexity usage |
 | GET | `/api/v1/me/integrations/telegram` | Return Telegram link status |
 | POST | `/api/v1/me/integrations/telegram/link` | Link a Telegram token to the current user |
 | POST | `/api/v1/signals` | Create a signal |
@@ -323,10 +324,31 @@ Example:
 Today it is derived from existing signal fields only:
 
 - interval schedule contribution: `ceil(3600 / interval_seconds)`
-- condition contribution: `+1` per condition
-- signals without an interval schedule currently return `0`
+- provider-work contribution: `work_units_per_evaluation`
+- current state reads cost 1 work unit
+- historical state `change` conditions cost 2 work units
+- raw-event / HyperSync checks cost 2 work units
+- inactive or external-only signals return `0`
 
 Read **Usage Limits** for the plan model, worked examples, and the $10/month Pro target budget.
+
+## Plan and usage limits
+
+### `GET /api/v1/me/limits`
+
+Returns the authenticated user's plan and active complexity usage.
+
+```json
+{
+  "plan": { "key": "free", "name": "Free" },
+  "active_complexity": { "used": 24, "limit": 25 },
+  "minimum_schedule_interval_seconds": 300,
+  "complexity_formula": {
+    "version": "provider_work_v1",
+    "docs_url": "https://docs.iruka.tech/product/usage-limits"
+  }
+}
+```
 
 ## Active complexity budget errors
 
@@ -336,15 +358,21 @@ When create, update, or toggle-on would exceed the authenticated user's active c
 {
   "error": "Active complexity budget exceeded",
   "code": "active_complexity_budget_exceeded",
-  "projected_complexity": 28,
-  "tier_maximum": 20,
-  "current_complexity": 14
+  "projected_complexity": 48,
+  "tier_maximum": 25,
+  "current_complexity": 24,
+  "plan": { "key": "free", "name": "Free" },
+  "signal_complexity": 24,
+  "docs_url": "https://docs.iruka.tech/product/usage-limits",
+  "minimum_schedule_interval_seconds": 300
 }
 ```
 
 - `projected_complexity` = what the user's active total would become after the requested change
 - `tier_maximum` = the current allowed budget for that user's tier
 - `current_complexity` = current active total when available
+- `signal_complexity` = active complexity contribution for the requested signal
+- `plan` and `docs_url` let the app explain the limit without parsing strings
 
 ## List and fetch signals
 
