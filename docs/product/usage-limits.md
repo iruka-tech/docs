@@ -143,15 +143,27 @@ The response includes:
 - minimum schedule interval
 - formula version and docs URL
 
+Authenticated users can fetch billing state separately:
+
+```http
+GET /api/v1/me/billing
+```
+
+Pro upgrades are created through backend-owned Daimo Pay checkout sessions:
+
+```http
+POST /api/v1/billing/checkout-sessions
+```
+
+Only `plan_key: "pro_monthly"` is accepted. Iruka owns the amount, token, chain, treasury address, and duration, then grants Pro after the signed Daimo webhook is verified server-side.
+
 When create, update, or activation would exceed the active complexity budget, the API returns a structured `400` error with `code = "active_complexity_budget_exceeded"`, numeric budget fields, `plan`, `signal_complexity`, and `docs_url`.
 
-See the API Reference for the exact response shape.
+See the API Reference for exact response shapes.
 
 ## Remaining rollout
 
-Iruka now has provider-work complexity enforcement, a plan/limits response, and product-facing quota errors. Remaining work:
+Iruka now has provider-work complexity enforcement, plan/limits responses, product-facing quota errors, and backend-owned Daimo Pay checkout for prepaid Pro periods. Remaining work:
 
-1. **Add plan assignment.** Map users to Free or Pro through a backend plan resolver. Keep internal/admin overrides separate from billing status.
-2. **Wire billing after the product contract is stable.** Connect $10/month checkout and subscription status to the plan resolver.
-3. **Update the app UI.** Show current usage before signal creation and link limit errors to this page.
-4. **Monitor representative workloads.** Verify that Pro capacity fits real monitoring needs without making local incidents into public reference examples.
+1. **Update the app UI.** Show current usage before signal creation, start Pro checkout from the billing endpoint, and pass the returned Daimo session fields into a minimal payment UI.
+2. **Monitor representative workloads.** Verify that Pro capacity fits real monitoring needs without making local incidents into public reference examples.
