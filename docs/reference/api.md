@@ -23,6 +23,8 @@ Base URL for the public API:
 | GET | `/api/v1/auth/me` | Return the authenticated profile |
 | POST | `/api/v1/auth/logout` | Revoke the current session |
 | GET | `/api/v1/me/limits` | Return plan and active complexity usage |
+| GET | `/api/v1/me/billing` | Return billing and entitlement summary |
+| POST | `/api/v1/billing/checkout-sessions` | Create a Pro checkout session |
 | GET | `/api/v1/me/integrations/telegram` | Return Telegram link status |
 | POST | `/api/v1/me/integrations/telegram/link` | Link a Telegram token to the current user |
 | POST | `/api/v1/signals` | Create a signal |
@@ -332,7 +334,7 @@ Today it is derived from existing signal fields only:
 
 Read **Usage Limits** for the plan model, worked examples, and the $10/month Pro target budget.
 
-## Plan and usage limits
+## Plan, usage limits, and billing
 
 ### `GET /api/v1/me/limits`
 
@@ -349,6 +351,44 @@ Returns the authenticated user's plan and active complexity usage.
   }
 }
 ```
+
+### `GET /api/v1/me/billing`
+
+Returns the authenticated user's current billing-backed entitlement state.
+
+```json
+{
+  "plan": { "key": "pro", "name": "Pro" },
+  "pro": { "valid_until": "2026-06-05T12:00:00.000Z" }
+}
+```
+
+If the user does not have an active paid entitlement, `plan.key` is `"free"` and `pro` is `null` or expired.
+
+### `POST /api/v1/billing/checkout-sessions`
+
+Creates a backend-owned Daimo Pay checkout session for Pro.
+
+```json
+{
+  "plan_key": "pro_monthly"
+}
+```
+
+Response:
+
+```json
+{
+  "checkout_id": "550e8400-e29b-41d4-a716-446655440000",
+  "provider": "daimo",
+  "session_id": "dp_session_123",
+  "status": "requires_payment_method",
+  "expires_at": "2026-05-05T12:00:00.000Z",
+  "client_secret": "dp_client_secret"
+}
+```
+
+The client cannot choose amount, token, chain, treasury address, or duration. Pass the Daimo session fields to the payment UI, then let Iruka grant Pro only after the signed Daimo webhook is verified server-side.
 
 ## Active complexity budget errors
 
