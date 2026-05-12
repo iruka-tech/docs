@@ -147,11 +147,34 @@ When create, update, or activation would exceed the active complexity budget, th
 
 See the API Reference for the exact response shape.
 
+## Billing
+
+### `GET /api/v1/me/billing`
+
+Returns the authenticated user's billing state and active Pro entitlement, if any. The backend is the source of truth for paid access.
+
+### `POST /api/v1/billing/checkout-sessions`
+
+Accepts a backend-validated checkout request shape for `pro_monthly`.
+
+```json
+{
+  "plan_key": "pro_monthly",
+  "provider": "x402"
+}
+```
+
+`provider` is optional and defaults to `x402`. Supported provider identifiers are `x402` and `mpp`.
+
+Current behavior: this endpoint returns `501 Not Implemented` before creating any checkout rows. The backend remains the source of truth for plan, amount, token, recipient, duration, and entitlements.
+
+The frontend must not grant Pro from checkout UI state. Pro is granted only after backend provider verification.
+
 ## Remaining rollout
 
 Iruka now has provider-work complexity enforcement, a plan/limits response, and product-facing quota errors. Remaining work:
 
-1. **Add plan assignment.** Map users to Free or Pro through a backend plan resolver. Keep internal/admin overrides separate from billing status.
-2. **Wire billing after the product contract is stable.** Connect $10/month checkout and subscription status to the plan resolver.
+1. **Finish provider rollout.** Add x402 as the preferred low-friction stablecoin rail and MPP for HTTP 402 agent/API/session flows when verification is production-ready.
+2. **Keep plan assignment backend-owned.** Paid provider state should resolve into durable Pro entitlements; internal/admin overrides stay separate from billing status.
 3. **Update the app UI.** Show current usage before signal creation and link limit errors to this page.
 4. **Monitor representative workloads.** Verify that Pro capacity fits real monitoring needs without making local incidents into public reference examples.

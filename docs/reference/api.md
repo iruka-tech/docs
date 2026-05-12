@@ -23,6 +23,8 @@ Base URL for the public API:
 | GET | `/api/v1/auth/me` | Return the authenticated profile |
 | POST | `/api/v1/auth/logout` | Revoke the current session |
 | GET | `/api/v1/me/limits` | Return plan and active complexity usage |
+| GET | `/api/v1/me/billing` | Return billing and Pro entitlement summary |
+| POST | `/api/v1/billing/checkout-sessions` | Create a Pro checkout session |
 | GET | `/api/v1/me/integrations/telegram` | Return Telegram link status |
 | POST | `/api/v1/me/integrations/telegram/link` | Link a Telegram token to the current user |
 | POST | `/api/v1/signals` | Create a signal |
@@ -65,6 +67,27 @@ It checks:
 - Redis
 - configured archive RPC endpoints
 - optional indexed/raw providers when enabled
+
+## Billing endpoints
+
+### `GET /api/v1/me/billing`
+
+Returns the authenticated user's billing state. The backend remains the source of truth for paid access.
+
+### `POST /api/v1/billing/checkout-sessions`
+
+Accepts a backend-validated Pro checkout request shape.
+
+```json
+{
+  "plan_key": "pro_monthly",
+  "provider": "x402"
+}
+```
+
+`provider` is optional and defaults to `x402`. Supported identifiers are `x402` and `mpp`.
+
+Current behavior: this endpoint returns `501 Not Implemented` before creating any checkout rows. The backend remains the source of truth for plan, amount, token, recipient, duration, and entitlements.
 
 ## Catalog endpoint
 
