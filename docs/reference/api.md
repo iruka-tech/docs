@@ -76,16 +76,18 @@ Returns the authenticated user's billing state. The backend remains the source o
 
 ### `POST /api/v1/billing/checkout-sessions`
 
-Creates a backend-owned Pro checkout session.
+Accepts a backend-validated Pro checkout request shape.
 
 ```json
 {
   "plan_key": "pro_monthly",
-  "provider": "daimo"
+  "provider": "x402"
 }
 ```
 
-`provider` is optional. Daimo is the currently implemented checkout path for accounts with credentials. x402 and MPP are planned identifiers, not client-side entitlement grants.
+`provider` is optional and defaults to `x402`. Supported identifiers are `x402` and `mpp`.
+
+Current behavior: this endpoint returns `501 Not Implemented` before creating any checkout rows. The backend remains the source of truth for plan, amount, token, recipient, duration, and entitlements.
 
 ## Catalog endpoint
 
