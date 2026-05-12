@@ -23,6 +23,8 @@ Base URL for the public API:
 | GET | `/api/v1/auth/me` | Return the authenticated profile |
 | POST | `/api/v1/auth/logout` | Revoke the current session |
 | GET | `/api/v1/me/limits` | Return plan and active complexity usage |
+| GET | `/api/v1/me/billing` | Return billing and Pro entitlement summary |
+| POST | `/api/v1/billing/checkout-sessions` | Create a Pro checkout session |
 | GET | `/api/v1/me/integrations/telegram` | Return Telegram link status |
 | POST | `/api/v1/me/integrations/telegram/link` | Link a Telegram token to the current user |
 | POST | `/api/v1/signals` | Create a signal |
@@ -65,6 +67,25 @@ It checks:
 - Redis
 - configured archive RPC endpoints
 - optional indexed/raw providers when enabled
+
+## Billing endpoints
+
+### `GET /api/v1/me/billing`
+
+Returns the authenticated user's billing state. The backend remains the source of truth for paid access.
+
+### `POST /api/v1/billing/checkout-sessions`
+
+Creates a backend-owned Pro checkout session.
+
+```json
+{
+  "plan_key": "pro_monthly",
+  "provider": "daimo"
+}
+```
+
+`provider` is optional. Daimo is the currently implemented checkout path for accounts with credentials. x402 and MPP are planned identifiers, not client-side entitlement grants.
 
 ## Catalog endpoint
 

@@ -147,11 +147,32 @@ When create, update, or activation would exceed the active complexity budget, th
 
 See the API Reference for the exact response shape.
 
+## Billing
+
+### `GET /api/v1/me/billing`
+
+Returns the authenticated user's billing state and active Pro entitlement, if any. The backend is the source of truth for paid access.
+
+### `POST /api/v1/billing/checkout-sessions`
+
+Creates a backend-owned checkout session for `pro_monthly`.
+
+```json
+{
+  "plan_key": "pro_monthly",
+  "provider": "daimo"
+}
+```
+
+`provider` is optional. Daimo is the implemented checkout path for accounts with credentials. x402 and MPP are planned provider identifiers: x402 is the preferred near-term stablecoin/API payment rail, while MPP is intended for HTTP 402 agent/API/session flows once provider access and verification are production-ready.
+
+The frontend must not grant Pro from checkout UI state. Pro is granted only after backend provider verification.
+
 ## Remaining rollout
 
 Iruka now has provider-work complexity enforcement, a plan/limits response, and product-facing quota errors. Remaining work:
 
-1. **Add plan assignment.** Map users to Free or Pro through a backend plan resolver. Keep internal/admin overrides separate from billing status.
-2. **Wire billing after the product contract is stable.** Connect $10/month checkout and subscription status to the plan resolver.
+1. **Finish provider rollout.** Keep Daimo as an implemented but access-gated checkout path, add x402 as the preferred low-friction stablecoin rail, and add MPP for HTTP 402 agent/API/session flows when verification is production-ready.
+2. **Keep plan assignment backend-owned.** Paid provider state should resolve into durable Pro entitlements; internal/admin overrides stay separate from billing status.
 3. **Update the app UI.** Show current usage before signal creation and link limit errors to this page.
 4. **Monitor representative workloads.** Verify that Pro capacity fits real monitoring needs without making local incidents into public reference examples.
