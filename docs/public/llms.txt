@@ -1,0 +1,23 @@
+# Iruka Docs
+
+> Plain-markdown index for agents reading Iruka product, API, and integration documentation.
+
+Generated from the docs source.
+
+## Full plain-markdown export
+
+- [All Iruka docs as one markdown file](/llms-full.txt)
+
+## Docs pages
+
+- [Introduction](/): source `index.md`
+- [Getting Started](/get-started/getting-started): source `get-started/getting-started.md`
+- [Signal](/product/public-signal-model): source `product/public-signal-model.md`
+- [Usage Limits](/product/usage-limits): source `product/usage-limits.md`
+- [Definition](/product/definition): source `product/definition.md`
+- [Examples](/product/dsl): source `product/dsl.md`
+- [API Reference](/reference/api): source `reference/api.md`
+- [External Triggers](/reference/external-triggers): source `reference/external-triggers.md`
+- [Webhook Delivery](/integrations/webhook-delivery): source `integrations/webhook-delivery.md`
+- [Telegram Delivery](/integrations/telegram-delivery): source `integrations/telegram-delivery.md`
+- [Moved](/product/create-a-signal): source `product/create-a-signal.md`
