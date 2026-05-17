@@ -1,0 +1,2023 @@
+# Iruka Docs — Full Plain Markdown Export
+
+Generated from the docs source.
+
+Canonical docs site: https://docs.iruka.tech
+
+This file concatenates the public markdown documentation so agents can read Iruka without crawling the rendered site.
+
+## Table of contents
+
+- [Introduction](#introduction) — index.md
+- [Getting Started](#getting-started) — get-started/getting-started.md
+- [Signal](#signal) — product/public-signal-model.md
+- [Usage Limits](#usage-limits) — product/usage-limits.md
+- [Definition](#definition) — product/definition.md
+- [Examples](#examples) — product/dsl.md
+- [API Reference](#api-reference) — reference/api.md
+- [External Triggers](#external-triggers) — reference/external-triggers.md
+- [Webhook Delivery](#webhook-delivery) — integrations/webhook-delivery.md
+- [Telegram Delivery](#telegram-delivery) — integrations/telegram-delivery.md
+- [Moved](#moved) — product/create-a-signal.md
+
+---
+
+# Introduction
+
+Source: `index.md`
+
+Canonical URL: https://docs.iruka.tech/
+
+Iruka is a signal layer for onchain automation and agents.
+
+Today, most onchain monitoring is still built as fragile watcher code, stitching together RPC calls, indexers, and custom logic. Iruka replaces that complexity with signals: simple, declarative rules that define what to watch, how to evaluate it across state, events, and time, and when to trigger. With Iruka, complex onchain queries become as natural as a Web2 query—no pipelines or glue code required, just define the condition and get a structured result.
+
+Iruka runs these signals reliably and delivers outputs your system can act on, giving your agents a clean trigger surface to focus on decisions instead of data plumbing.
+
+---
+
+# Getting Started
+
+Source: `get-started/getting-started.md`
+
+Canonical URL: https://docs.iruka.tech/get-started/getting-started
+
+## What you need
+
+Before you start, make sure you have:
+
+- your Iruka API base URL: `https://api.iruka.tech`
+- an API key generated from the Iruka console on `iruka.tech`
+- a linked Telegram account if you plan to use Telegram delivery
+- a public HTTPS endpoint if you plan to use webhook delivery
+
+In the examples below, replace `<your_api_key>` with your real API key.
+
+## Step 1: confirm the environment
+
+Check that the API is reachable and see what chains are enabled.
+
+```bash
+curl -sS https://api.iruka.tech/health
+curl -sS https://api.iruka.tech/chains
+curl -sS https://api.iruka.tech/api/v1/catalog
+```
+
+These endpoints tell you:
+
+- `/health` — the service is up
+- `/chains` — which chains this environment supports
+- `/api/v1/catalog` — the currently supported signal template catalog
+
+## Step 2: get an API key
+
+Sign in on `iruka.tech`, open the Iruka console, and generate an API key there.
+
+Send protected requests with:
+
+```http
+X-API-Key: iruka_...
+```
+
+## Step 3: create your first signal
+
+This example creates a scheduled threshold signal that watches an ERC20 balance and delivers alerts to a webhook.
+
+### Option A: interval schedule
+
+```bash
+curl -sS -X POST https://api.iruka.tech/api/v1/signals \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <your_api_key>" \
+  -d '{
+    "version": "1",
+    "name": "Large USDC holder",
+    "triggers": [
+      {
+        "type": "schedule",
+        "schedule": {
+          "kind": "interval",
+          "interval_seconds": 300
+        }
+      }
+    ],
+    "definition": {
+      "window": { "duration": "1h" },
+      "conditions": [
+        {
+          "type": "threshold",
+          "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+          "chain_id": 1,
+          "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "account": "0x1111111111111111111111111111111111111111",
+          "operator": ">",
+          "value": "1000000000"
+        }
+      ]
+    },
+    "delivery": [
+      {
+        "type": "webhook",
+        "url": "https://antonmyown.dev/webhook/iruka"
+      }
+    ],
+    "metadata": {
+      "description": "Optional",
+      "repeat_policy": { "mode": "cooldown" }
+    }
+  }'
+```
+
+If you want both human alerts and machine-readable delivery, use both targets:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+If you want a simple first signal, start with a threshold or a change condition.
+
+Example: notify when a USDC balance drops 20% in 2 hours.
+
+```json
+{
+  "version": "1",
+  "name": "USDC balance down 20% in 2h",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
+  "definition": {
+    "window": { "duration": "2h" },
+    "conditions": [
+      {
+        "type": "change",
+        "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+        "chain_id": 1,
+        "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "account": "0x1111111111111111111111111111111111111111",
+        "direction": "decrease",
+        "by": { "percent": 20 }
+      }
+    ]
+  },
+  "delivery": [
+    {
+      "type": "webhook",
+      "url": "https://antonmyown.dev/webhook/iruka"
+    }
+  ]
+}
+```
+
+That works because Iruka uses archive RPC reads for state-based `change` conditions, so it can compare the current balance to the balance at `window_start`.
+
+### Option B: cron schedule
+
+Use cron when the signal should wake at a fixed UTC time instead of every N seconds.
+
+```json
+{
+  "type": "schedule",
+  "schedule": {
+    "kind": "cron",
+    "expression": "0 8 * * *"
+  }
+}
+```
+
+That example runs every day at **08:00 UTC**. Use standard **five-field** cron syntax.
+
+## Step 4: inspect what you created
+
+Saved-signal responses now include a top-level `complexity_score`, so you can immediately see how expensive a signal is from the API response itself.
+
+Useful follow-up routes:
+
+```bash
+curl -sS https://api.iruka.tech/api/v1/signals \
+  -H "X-API-Key: <your_api_key>"
+
+curl -sS https://api.iruka.tech/api/v1/signals/<signal_id> \
+  -H "X-API-Key: <your_api_key>"
+
+curl -sS https://api.iruka.tech/api/v1/signals/<signal_id>/history \
+  -H "X-API-Key: <your_api_key>"
+```
+
+Saved-signal responses now include a top-level `complexity_score`, so a successful create/read response tells you how expensive that signal currently is.
+Use `GET /api/v1/me/limits` to fetch your plan, active complexity used, active complexity limit, minimum schedule interval, and formula docs URL.
+If create, update, or toggle-on would exceed your active complexity budget, the API returns a structured `400` error with `code = "active_complexity_budget_exceeded"`, numeric budget fields, `plan`, `signal_complexity`, and `docs_url`.
+
+For the plan model and examples, read **Usage Limits**. The short version: active scheduled signals consume `ceil(3600 / interval_seconds) × work_units_per_evaluation` complexity units, where work units estimate state reads, archive reads, and raw-event queries.
+
+## What to read next
+
+- **Signal** for the target signal schema
+- **Usage Limits** for complexity units and plan budgets
+- **Definition** for the query structure
+- **Examples** for condition examples
+- **API Reference** for routes and payloads
+
+---
+
+# Signal
+
+Source: `product/public-signal-model.md`
+
+Canonical URL: https://docs.iruka.tech/product/public-signal-model
+
+This page explains what a signal is and what the top-level signal object contains.
+
+## What a signal is
+
+A signal is a saved monitoring rule.
+
+A common pattern is a state-based `change` condition, such as:
+
+- notify me when this ERC-20 balance is down 20% in the last 2 hours
+- notify me when this ERC-4626 share balance increased in the last day
+
+Those work because Iruka can compare the current state read to the state at the start of the signal window.
+
+A signal has six top-level request parts:
+
+- `version`
+- `name`
+- `triggers`
+- `definition`
+- `delivery`
+- `metadata`
+
+When Iruka returns a saved signal from the API, it also adds response-only fields such as:
+
+- `id`
+- `complexity_score`
+- `is_active`
+- timestamps like `created_at`, `updated_at`, `last_evaluated_at`, and `last_fired_at`
+
+## Top-level shape
+
+```json
+{
+  "version": "1",
+  "name": "Large USDC holder",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
+  "definition": {
+    "window": { "duration": "1h" },
+    "logic": "AND",
+    "conditions": [
+      {
+        "type": "threshold",
+        "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+        "chain_id": 1,
+        "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "account": "0x1111111111111111111111111111111111111111",
+        "operator": ">",
+        "value": "1000000000"
+      }
+    ]
+  },
+  "delivery": [
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ],
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": { "mode": "cooldown" }
+  }
+}
+```
+
+## Top-level fields
+
+### `version`
+
+`version` is the schema version for the outer signal shape.
+
+```json
+{ "version": "1" }
+```
+
+### `name`
+
+`name` is the human-readable signal name.
+
+```json
+{ "name": "Large supplier position" }
+```
+
+### `triggers`
+
+`triggers` defines how the signal wakes up.
+
+It is an array so one signal can have more than one wake-up path.
+
+For now, keep `triggers` to **3 entries max**.
+
+#### Schedule trigger
+
+Use a schedule when Iruka should wake the signal on its own.
+
+Relative schedule:
+
+```json
+{
+  "type": "schedule",
+  "schedule": {
+    "kind": "interval",
+    "interval_seconds": 300
+  }
+}
+```
+
+Absolute schedule:
+
+```json
+{
+  "type": "schedule",
+  "schedule": {
+    "kind": "cron",
+    "expression": "0 8 * * *"
+  }
+}
+```
+
+Cron expressions are interpreted in UTC.
+
+#### External trigger
+
+```json
+{
+  "type": "external"
+}
+```
+
+This trigger type exists for cases where your own authenticated system should wake the signal.
+
+> [!NOTE]
+> `external` is not live yet.
+> The schema supports this shape, but the public external input flow is not enabled yet.
+
+#### Signal-to-signal trigger
+
+```json
+{
+  "type": "iruka_signal",
+  "id": "upstream-signal-id"
+}
+```
+
+Use this when another Iruka signal should wake this signal.
+
+### `definition`
+
+`definition` is the query that Iruka evaluates.
+
+It contains:
+
+- `window`
+- `logic`
+- `conditions`
+
+Read **Definition** next for the details.
+
+### `delivery`
+
+`delivery` defines where notifications go.
+
+Current public delivery shapes:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" }
+  ]
+}
+```
+
+```json
+{
+  "delivery": [
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+Use Telegram when Iruka should reach a linked chat.
+Use webhook when Iruka should POST the alert payload to your own system.
+The field stays an array because one signal can fan out to both.
+
+### `metadata`
+
+`metadata` holds non-core product/runtime fields.
+
+```json
+{
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": {
+      "mode": "cooldown"
+    }
+  }
+}
+```
+
+Supported repeat policies:
+
+- `cooldown`
+- `post_first_alert_snooze`
+- `until_resolved`
+
+## Response-only signal fields
+
+When you fetch or create a saved signal through the API, Iruka adds top-level response fields beyond the request envelope.
+
+Important ones:
+
+- `id` — saved signal id
+- `complexity_score` — current per-signal complexity derived from the signal shape
+- `is_active` — whether the signal is active now
+- `created_at`, `updated_at`, `last_evaluated_at`, `last_fired_at`
+
+`complexity_score` is currently derived from the existing request fields only:
+
+- interval schedule contribution: `ceil(3600 / interval_seconds)`
+- provider-work contribution: `work_units_per_evaluation`
+- current state reads cost 1 work unit
+- historical state `change` conditions cost 2 work units
+- raw-event / HyperSync checks cost 2 work units
+- inactive or external-only signals currently return `0`
+
+Read **Usage Limits** for plan budgets, examples, and how to estimate active scheduled-signal usage.
+
+## What to read next
+
+- Read **Usage Limits** for complexity units and plan budgets
+- Read **Definition** for what belongs inside `definition`
+- Read **Examples** for concrete condition examples
+- Read **API Reference** for routes and payloads
+
+---
+
+# Usage Limits
+
+Source: `product/usage-limits.md`
+
+Canonical URL: https://docs.iruka.tech/product/usage-limits
+
+Iruka meters active scheduled signals by **complexity units**. The goal is simple: users should understand how much monitoring capacity a signal consumes before they hit a limit.
+
+A signal's complexity is based on how often Iruka evaluates it and how much upstream provider work each evaluation needs: current-state RPC reads, archive reads, and HyperSync/event queries.
+
+## Complexity units
+
+For an active signal with an interval schedule:
+
+```text
+complexity = ceil(3600 / interval_seconds) × work_units_per_evaluation
+```
+
+Rules:
+
+- `ceil(3600 / interval_seconds)` estimates hourly evaluation frequency.
+- `work_units_per_evaluation` estimates provider work per evaluation.
+- a current state read costs 1 work unit.
+- a `change` condition over state costs 2 work units because it reads current state and historical state at `window_start`.
+- a raw event / HyperSync query costs 2 work units.
+- expression sources add the work units of their inputs.
+- group conditions multiply nested condition work by the static group size when it is known.
+- inactive signals do not count toward the active usage limit.
+- external-only signals do not count toward the active scheduled-signal limit.
+- scheduled signals count while they are active.
+
+Examples:
+
+| Signal shape | Calculation | Complexity |
+| --- | ---: | ---: |
+| 60-minute interval, 1 current-state condition | `ceil(3600 / 3600) × 1` | `1` |
+| 15-minute interval, 2 current-state conditions | `ceil(3600 / 900) × 2` | `8` |
+| 10-minute interval, 1 current-state condition | `ceil(3600 / 600) × 1` | `6` |
+| 10-minute interval, 1 raw-event condition | `ceil(3600 / 600) × 2` | `12` |
+| 5-minute interval, 3 current-state conditions | `ceil(3600 / 300) × 3` | `36` |
+
+## Example: liquidity threshold
+
+Suppose a signal:
+
+- checks every 10 minutes
+- has 1 threshold condition
+- reads current liquidity for a pool or token account
+
+Its complexity is:
+
+```text
+ceil(3600 / 600) × 1 = 6
+```
+
+So one simple 10-minute liquidity threshold costs **6 complexity units**.
+
+## Example: historical state change
+
+Suppose a signal:
+
+- checks every 1 minute
+- has 2 top-level `change` conditions
+- each condition compares the current value against historical state at `window_start`
+- combines both conditions with `logic: "AND"`
+
+Each `change` condition costs 2 work units: one current read and one archive/historical read. Two `change` conditions cost 4 work units per evaluation.
+
+Its complexity is:
+
+```text
+ceil(3600 / 60) × (2 + 2) = 240
+```
+
+So this signal costs **240 complexity units**.
+
+Example definition:
+
+```json
+{
+  "window": { "duration": "1h" },
+  "logic": "AND",
+  "conditions": [
+    {
+      "type": "change",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xTokenAddress",
+      "account": "0x1111111111111111111111111111111111111111",
+      "direction": "decrease",
+      "by": { "percent": 20 }
+    },
+    {
+      "type": "change",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xTokenAddress",
+      "account": "0x2222222222222222222222222222222222222222",
+      "direction": "decrease",
+      "by": { "percent": 20 }
+    }
+  ]
+}
+```
+
+With a 500-unit Pro budget, a user could run about **2** of these high-frequency historical-state signals at once.
+
+## Plan limits
+
+Current production has a default active complexity limit of **25**. That is enough for a few lightweight monitors, but it is intentionally not enough for heavy professional monitoring.
+
+The intended paid plan baseline is:
+
+| Plan | Monthly price | Active complexity budget | Example capacity |
+| --- | ---: | ---: | --- |
+| Free | $0 | 25 | about 4 simple 10-minute threshold signals |
+| Pro | $10 | 500 | about 83 simple 10-minute threshold signals, or about 2 high-frequency historical-state signals |
+
+A 500-unit Pro budget gives room for many low-frequency checks, while still charging high-frequency archive/event work proportionally.
+
+## How to reduce complexity
+
+If you hit a usage limit, reduce the amount of scheduled work Iruka needs to run:
+
+- use a longer interval when sub-minute reaction time is not needed
+- reduce the number of state reads or archive comparisons per evaluation
+- keep raw-event / HyperSync checks scoped tightly
+- combine related checks into fewer signals when they share the same delivery behavior
+- deactivate stale or test signals
+- use external triggers for event-driven workflows that do not need scheduled polling
+- keep high-frequency checks focused on the smallest set of conditions that need fast response
+
+## API behavior
+
+Saved-signal responses include `complexity_score`, so a successful create or read tells you how expensive that signal is.
+
+Authenticated users can fetch their current limits:
+
+```http
+GET /api/v1/me/limits
+```
+
+The response includes:
+
+- plan key and name
+- active complexity used and limit
+- minimum schedule interval
+- formula version and docs URL
+
+When create, update, or activation would exceed the active complexity budget, the API returns a structured `400` error with `code = "active_complexity_budget_exceeded"`, numeric budget fields, `plan`, `signal_complexity`, and `docs_url`.
+
+See the API Reference for the exact response shape.
+
+## Billing
+
+### `GET /api/v1/me/billing`
+
+Returns the authenticated user's billing state and active Pro entitlement, if any. The backend is the source of truth for paid access.
+
+### `POST /api/v1/billing/checkout-sessions`
+
+Accepts a backend-validated checkout request shape for `pro_monthly`.
+
+```json
+{
+  "plan_key": "pro_monthly",
+  "provider": "x402"
+}
+```
+
+`provider` is optional and defaults to `x402`. Supported provider identifiers are `x402` and `mpp`.
+
+Current behavior: this endpoint returns `501 Not Implemented` before creating any checkout rows. The backend remains the source of truth for plan, amount, token, recipient, duration, and entitlements.
+
+The frontend must not grant Pro from checkout UI state. Pro is granted only after backend provider verification.
+
+## Remaining rollout
+
+Iruka now has provider-work complexity enforcement, a plan/limits response, and product-facing quota errors. Remaining work:
+
+1. **Finish provider rollout.** Add x402 as the preferred low-friction stablecoin rail and MPP for HTTP 402 agent/API/session flows when verification is production-ready.
+2. **Keep plan assignment backend-owned.** Paid provider state should resolve into durable Pro entitlements; internal/admin overrides stay separate from billing status.
+3. **Update the app UI.** Show current usage before signal creation and link limit errors to this page.
+4. **Monitor representative workloads.** Verify that Pro capacity fits real monitoring needs without making local incidents into public reference examples.
+
+---
+
+# Definition
+
+Source: `product/definition.md`
+
+Canonical URL: https://docs.iruka.tech/product/definition
+
+This page explains what goes inside `definition`.
+
+Read **Signal** first if you want the full top-level signal shape.
+
+## What `definition` contains
+
+`definition` is the query Iruka evaluates.
+
+It contains:
+
+- `window`
+- `logic`
+- `conditions`
+
+## Supported protocols today
+
+The first thing to know is what kinds of signals you can actually build today.
+
+Current supported protocol families in the public docs are:
+
+- `Morpho`
+- `ERC4626`
+- `ERC20`
+- `uniswap_v2`
+- `uniswap_v3`
+- `uniswap_v4`
+- `curve`
+
+Current alias-backed protocol/entity shapes:
+
+- `Morpho.Position`
+- `Morpho.Market`
+- `Morpho.Event`
+- `Morpho.Flow`
+- `ERC4626.Position`
+- `ERC20.Position`
+
+Use those through `source.kind = "alias"` names such as:
+
+- `Morpho.Position.supplyShares`
+- `Morpho.Market.totalBorrowAssets`
+- `ERC4626.Position.shares`
+- `ERC20.Position.balance`
+
+LP pool reads are lower-level raw `state_ref` inputs, not aliases:
+
+| Protocol | Entity | Field | Required filters |
+| --- | --- | --- | --- |
+| `uniswap_v2` | `Pool` | `reserve0`, `reserve1` | `chainId`, `contractAddress` |
+| `uniswap_v3` | `Pool` | `liquidity`, `sqrtPriceX96` | `chainId`, `contractAddress` |
+| `uniswap_v4` | `PoolManager` | `liquidity` | `chainId`, `contractAddress`, `poolId` |
+| `curve` | `Pool` | `balance` | `chainId`, `contractAddress`, `tokenIndex` |
+| `curve` | `Pool` | `dy` | `chainId`, `contractAddress`, `i`, `j`, `dx` |
+
+These LP fields return raw contract integers/liquidity/quote units. They are not USD liquidity, token-decimal-normalized TVL, or derived pool math. Curve `Pool.balance` uses `balances(uint256 index)`, and Curve `Pool.dy` uses stable-style `get_dy(int128 i, int128 j, uint256 dx)`. Uniswap v3 `sqrtPriceX96` is the raw `slot0()` price field and can be used for pool-price thresholds after converting the human price into Uniswap's fixed-point format.
+
+## How to think about entities
+
+Each protocol family has its own entity model.
+
+Today:
+
+- **Morpho** uses `Position`, `Market`, `Event`, and `Flow`
+- **ERC4626** uses `Position`
+- **ERC20** uses `Position`
+- **Uniswap v2/v3** use `Pool`
+- **Uniswap v4** uses `PoolManager`
+- **Curve** uses `Pool`
+
+That means the required condition inputs differ by protocol.
+
+For example:
+
+- **Morpho.Position** usually needs a market target plus a user address
+- **ERC4626.Position** needs a vault contract plus an owner address
+- **ERC20.Position** needs a token contract plus a holder address
+- **Uniswap v2/v3 Pool** reads need a pool contract
+- **Uniswap v4 PoolManager** reads need the PoolManager contract plus a `poolId`
+- **Curve Pool** balance reads need the pool contract plus a `tokenIndex`; quote reads need `i`, `j`, and raw `dx`
+
+ERC20 is the simplest example to read first because there is no market-style `entity_id` in the public condition shape. You mainly provide:
+
+- `token` — which token contract
+- `account` — which holder account
+
+## `definition` example
+
+```json
+{
+  "window": { "duration": "1h" },
+  "logic": "AND",
+  "conditions": [
+    {
+      "type": "threshold",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "account": "0x1111111111111111111111111111111111111111",
+      "operator": ">",
+      "value": "1000000000"
+    }
+  ]
+}
+```
+
+## Raw LP pool state refs
+
+Use `state_ref` when the source needs protocol-specific filters that alias shorthand cannot carry.
+
+Example: alert when a Uniswap v3 pool's raw `liquidity()` value drops 20% over one hour.
+
+```json
+{
+  "type": "change",
+  "state_ref": {
+    "type": "state",
+    "protocol": "uniswap_v3",
+    "entity_type": "Pool",
+    "field": "liquidity",
+    "filters": [
+      { "field": "chainId", "op": "eq", "value": 1 },
+      { "field": "contractAddress", "op": "eq", "value": "0xUniswapV3Pool" }
+    ]
+  },
+  "direction": "decrease",
+  "by": { "percent": 20 },
+  "window": { "duration": "1h" }
+}
+```
+
+For Uniswap v4, the contract address is the PoolManager and the pool is selected by `poolId`. For Curve, select the reserve with `tokenIndex`.
+
+## `window`
+
+`window` defines the default time range for the whole definition.
+
+```json
+{
+  "window": { "duration": "1h" }
+}
+```
+
+Some condition types can override `window` locally.
+
+For `change` conditions, this window is especially important: Iruka reads the current value and compares it to the value at the start of the window.
+
+That means a definition window of `2h` turns a change condition into "current value vs 2 hours ago".
+
+## Time-travel state reads
+
+`change` conditions for state-based sources are powered by archive RPC access.
+
+In practice, Iruka does two reads for the same state leaf:
+
+- `current`
+- `window_start`
+
+For example, an ERC-20 balance change signal reads:
+
+- current `balanceOf(account)` now
+- historical `balanceOf(account)` at the start of the window
+
+This is what lets you express rules like:
+
+- notify me when this ERC-20 balance is down 20% in the last 2 hours
+- notify me when this ERC-4626 share balance increased by 10% in the last day
+
+Today, `change` is the main public condition type that depends on archive RPC-backed historical state reads.
+
+## `logic`
+
+`logic` defines how multiple conditions combine.
+
+```json
+{ "logic": "AND" }
+```
+
+Supported values:
+
+- `AND`
+- `OR`
+
+If omitted, Iruka should treat `AND` as the safe default.
+
+## `conditions`
+
+`conditions` is the list of tests inside the definition.
+
+Each condition checks one thing, such as:
+
+- current value above a threshold
+- value changed over time
+- grouped matches across many addresses
+- event count over a rolling window
+
+The two condition families most users should learn first are:
+
+- `threshold` — compare one evaluated value to a target now
+- `change` — compare the current value to the value at `window_start`
+
+Example `change` condition:
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+  "chain_id": 1,
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
+  "direction": "decrease",
+  "by": { "percent": 20 },
+  "window": { "duration": "2h" }
+}
+```
+
+That means: current ERC-20 balance is down at least 20% versus 2 hours ago.
+
+A threshold example belongs here, not at the top level.
+
+```json
+{
+  "conditions": [
+    {
+      "type": "threshold",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "account": "0x1111111111111111111111111111111111111111",
+      "operator": ">",
+      "value": "1000000000"
+    }
+  ]
+}
+```
+
+## What to read next
+
+- Read **Examples** for complete condition examples
+- Read **API Reference** for request and response details
+
+---
+
+# Examples
+
+Source: `product/dsl.md`
+
+Canonical URL: https://docs.iruka.tech/product/dsl
+
+This page gives concrete signal examples.
+
+Read **Signal** first for the top-level shape.
+Read **Definition** first for what belongs inside `definition`.
+
+## Example 1: threshold
+
+A threshold condition compares one evaluated value against a target.
+
+### Condition object
+
+```json
+{
+  "type": "threshold",
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+  "chain_id": 1,
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
+  "operator": ">",
+  "value": "1000000000"
+}
+```
+
+### Full `definition` example
+
+```json
+{
+  "window": { "duration": "1h" },
+  "conditions": [
+    {
+      "type": "threshold",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "account": "0x1111111111111111111111111111111111111111",
+      "operator": ">",
+      "value": "1000000000"
+    }
+  ]
+}
+```
+
+Rules:
+
+- preferred input is `source`
+- compatibility inputs `metric` and `state_ref` are still accepted
+- `operator` must be one of `>`, `<`, `>=`, `<=`, `==`, `!=`
+- `value` can be a number or numeric string
+
+---
+
+## Example 2: change
+
+A change condition checks movement over time instead of only the current value.
+
+Iruka evaluates this by reading the same state leaf twice:
+
+- `current`
+- `window_start`
+
+That historical read is powered by archive RPC access.
+
+### Condition object
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+  "chain_id": 1,
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
+  "direction": "decrease",
+  "by": { "percent": 10 },
+  "window": { "duration": "24h" }
+}
+```
+
+### Full `definition` example
+
+```json
+{
+  "window": { "duration": "24h" },
+  "conditions": [
+    {
+      "type": "change",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "account": "0x1111111111111111111111111111111111111111",
+      "direction": "decrease",
+      "by": { "percent": 10 },
+      "window": { "duration": "24h" }
+    }
+  ]
+}
+```
+
+### More change examples
+
+#### ERC20 balance down 20% in 2h
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+  "chain_id": 1,
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
+  "direction": "decrease",
+  "by": { "percent": 20 },
+  "window": { "duration": "2h" }
+}
+```
+
+Meaning: current token balance is down at least 20% versus 2 hours ago.
+
+#### ERC20 balance up by an absolute amount in 30m
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+  "chain_id": 1,
+  "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+  "account": "0x1111111111111111111111111111111111111111",
+  "direction": "increase",
+  "by": { "absolute": "500000000" },
+  "window": { "duration": "30m" }
+}
+```
+
+Meaning: current token balance is up by at least `500000000` base units versus 30 minutes ago.
+
+#### ERC4626 shares down 10% in 24h
+
+```json
+{
+  "type": "change",
+  "source": { "kind": "alias", "name": "ERC4626.Position.shares" },
+  "chain_id": 1,
+  "token": "0xVaultAddress",
+  "account": "0xOwnerAddress",
+  "direction": "decrease",
+  "by": { "percent": 10 },
+  "window": { "duration": "24h" }
+}
+```
+
+Meaning: current ERC-4626 share balance is down at least 10% versus 24 hours ago.
+
+---
+
+## Example 3: grouped threshold
+
+Use this when one signal should watch many addresses and alert if enough of them match.
+
+```json
+{
+  "conditions": [
+    {
+      "type": "group_threshold",
+      "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+      "chain_id": 1,
+      "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "operator": ">",
+      "value": "1000000000",
+      "group": {
+        "operator": ">=",
+        "value": 2
+      }
+    }
+  ]
+}
+```
+
+---
+
+## Example 4: LP pool liquidity change
+
+Use raw `state_ref` for LP pool reads. This example alerts only when both pools for the same pair are down at least 20% over the same window.
+
+```json
+{
+  "window": { "duration": "1h" },
+  "logic": "AND",
+  "conditions": [
+    {
+      "type": "change",
+      "state_ref": {
+        "type": "state",
+        "protocol": "uniswap_v3",
+        "entity_type": "Pool",
+        "field": "liquidity",
+        "filters": [
+          { "field": "chainId", "op": "eq", "value": 1 },
+          { "field": "contractAddress", "op": "eq", "value": "0xUniswapV3Pool005" }
+        ]
+      },
+      "direction": "decrease",
+      "by": { "percent": 20 }
+    },
+    {
+      "type": "change",
+      "state_ref": {
+        "type": "state",
+        "protocol": "uniswap_v3",
+        "entity_type": "Pool",
+        "field": "liquidity",
+        "filters": [
+          { "field": "chainId", "op": "eq", "value": 1 },
+          { "field": "contractAddress", "op": "eq", "value": "0xUniswapV3Pool030" }
+        ]
+      },
+      "direction": "decrease",
+      "by": { "percent": 20 }
+    }
+  ]
+}
+```
+
+You can mix protocol families in the same signal. For example, one condition can read Uniswap v3 `Pool.liquidity` while another reads Uniswap v4 `PoolManager.liquidity` with a `poolId`.
+
+## Example 5: raw event count
+
+Use this when you want to count decoded events over a rolling window.
+
+```json
+{
+  "window": { "duration": "1h" },
+  "conditions": [
+    {
+      "type": "threshold",
+      "source": {
+        "kind": "raw_event",
+        "aggregation": "count",
+        "chain_id": 1,
+        "event": {
+          "kind": "erc20_transfer",
+          "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+        }
+      },
+      "operator": ">",
+      "value": 25
+    }
+  ]
+}
+```
+
+## What to read next
+
+- Read **Signal** for the top-level signal shape
+- Read **Definition** for the structure inside `definition`
+- Read **API Reference** for request and response details
+
+---
+
+# API Reference
+
+Source: `reference/api.md`
+
+Canonical URL: https://docs.iruka.tech/reference/api
+
+This page documents the public HTTP surface for integrators.
+
+Base URL for the public API:
+
+- API root: `https://api.iruka.tech`
+- API namespace: `https://api.iruka.tech/api/v1`
+
+## Public endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/health` | Fast liveness check |
+| GET | `/chains` | Supported chain report |
+| GET | `/ready` | Dependency readiness check |
+| GET | `/api/v1/catalog` | Return the backend-supported signal template catalog |
+
+## Protected endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/auth/me` | Return the authenticated profile |
+| POST | `/api/v1/auth/logout` | Revoke the current session |
+| GET | `/api/v1/me/limits` | Return plan and active complexity usage |
+| GET | `/api/v1/me/billing` | Return billing and Pro entitlement summary |
+| POST | `/api/v1/billing/checkout-sessions` | Create a Pro checkout session |
+| GET | `/api/v1/me/integrations/telegram` | Return Telegram link status |
+| POST | `/api/v1/me/integrations/telegram/link` | Link a Telegram token to the current user |
+| POST | `/api/v1/signals` | Create a signal |
+| GET | `/api/v1/signals` | List signals |
+| GET | `/api/v1/signals/:id` | Get one signal |
+| PATCH | `/api/v1/signals/:id` | Update a signal |
+| PATCH | `/api/v1/signals/:id/toggle` | Toggle active status |
+| DELETE | `/api/v1/signals/:id` | Delete a signal |
+| GET | `/api/v1/signals/:id/history` | Evaluation and notification history |
+| POST | `/api/v1/signals/:id/trigger` | Planned external-input route for future `external` trigger support |
+| POST | `/api/v1/simulate/:id/simulate` | Simulate a signal over a time range |
+| POST | `/api/v1/simulate/:id/first-trigger` | Find the first matching point in a range |
+
+## Health endpoints
+
+### `GET /health`
+
+Use `/health` as the fast platform-level liveness check.
+
+It reports:
+
+- process status
+- configured source-family capability status
+- chain configuration loaded at startup
+
+### `GET /chains`
+
+Use `/chains` to inspect:
+
+- the explicit chain allowlist Iruka loaded
+- the required `RPC_URL_<chainId>` configuration names
+
+### `GET /ready`
+
+Use `/ready` when you want a stricter readiness signal.
+
+It checks:
+
+- PostgreSQL
+- Redis
+- configured archive RPC endpoints
+- optional indexed/raw providers when enabled
+
+## Billing endpoints
+
+### `GET /api/v1/me/billing`
+
+Returns the authenticated user's billing state. The backend remains the source of truth for paid access.
+
+### `POST /api/v1/billing/checkout-sessions`
+
+Accepts a backend-validated Pro checkout request shape.
+
+```json
+{
+  "plan_key": "pro_monthly",
+  "provider": "x402"
+}
+```
+
+`provider` is optional and defaults to `x402`. Supported identifiers are `x402` and `mpp`.
+
+Current behavior: this endpoint returns `501 Not Implemented` before creating any checkout rows. The backend remains the source of truth for plan, amount, token, recipient, duration, and entitlements.
+
+## Catalog endpoint
+
+### `GET /api/v1/catalog`
+
+This returns the backend-supported template catalog for signal builders.
+
+It is useful when you want your UI to present backend-native templates instead of hardcoding them in the frontend.
+
+## Create a signal
+
+### `POST /api/v1/signals`
+
+This endpoint accepts the full signal envelope.
+
+A successful create returns the saved signal plus a top-level `complexity_score`.
+If the signal would push the authenticated user over the active complexity budget, the API returns a structured `400` error instead of creating it.
+
+A valid request must include:
+
+- `version`
+- `name`
+- `triggers`
+- `definition`
+- `delivery`
+
+Current outer shape:
+
+```json
+{
+  "version": "1",
+  "name": "High transfer count",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
+  "definition": {
+    "window": { "duration": "1h" },
+    "conditions": [
+      {
+        "type": "threshold",
+        "source": {
+          "kind": "raw_event",
+          "aggregation": "count",
+          "chain_id": 1,
+          "event": {
+            "kind": "erc20_transfer",
+            "contract_addresses": ["0x3333333333333333333333333333333333333333"]
+          }
+        },
+        "operator": ">",
+        "value": 100
+      }
+    ]
+  },
+  "delivery": [
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ],
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": { "mode": "cooldown" }
+  }
+}
+```
+
+For entity-scoped signals, put the target directly on each condition with alias-specific fields: use `token` and `account` for `ERC20.Position.balance`/`ERC4626.Position.shares`, and keep `entity_id` for Morpho aliases.
+
+State-based `change` conditions depend on archive RPC access. Iruka evaluates those by comparing the current state read to the same state read at `window_start`.
+
+LP pool state reads use raw `state_ref` conditions because they need protocol-specific filters such as `poolId`, `tokenIndex`, or quote indices. Supported LP state targets are `uniswap_v2 Pool.reserve0/reserve1`, `uniswap_v3 Pool.liquidity/sqrtPriceX96`, `uniswap_v4 PoolManager.liquidity`, and `curve Pool.balance/dy`. Use `curve Pool.dy` for raw stable-pool quote checks such as `get_dy(i, j, dx) >= threshold`.
+
+```json
+{
+  "definition": {
+    "conditions": [
+      {
+        "type": "threshold",
+        "source": { "kind": "alias", "name": "Morpho.Position.supplyShares" },
+        "chain_id": 1,
+        "entity_id": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "operator": ">",
+        "value": "1000000000000000000"
+      }
+    ]
+  }
+}
+```
+
+## Trigger entries
+
+`triggers` is an array so one signal can wake up in more than one way.
+
+For now, cap it at **3 entries max**.
+
+### Relative schedule
+
+```json
+{
+  "type": "schedule",
+  "schedule": {
+    "kind": "interval",
+    "interval_seconds": 300
+  }
+}
+```
+
+### Absolute schedule
+
+```json
+{
+  "type": "schedule",
+  "schedule": {
+    "kind": "cron",
+    "expression": "0 8 * * *"
+  }
+}
+```
+
+Absolute schedule expressions use standard **five-field cron syntax** and are interpreted in **UTC**.
+
+Common examples:
+
+- `0 8 * * *` — every day at 08:00 UTC
+- `0 * * * *` — every hour on the hour
+- `*/15 * * * *` — every 15 minutes
+
+### External trigger
+
+```json
+{
+  "type": "external"
+}
+```
+
+This trigger type is part of the target schema.
+Public external input is not enabled yet.
+
+### Signal-to-signal trigger
+
+```json
+{
+  "type": "iruka_signal",
+  "id": "upstream-signal-id"
+}
+```
+
+If a user already knows another signal id, the user can add `type: "iruka_signal"` with that `id`. When the linked signal fires, it should wake this signal too.
+
+## Delivery
+
+Delivery stays separate from trigger semantics.
+
+Current public delivery shapes:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" }
+  ]
+}
+```
+
+```json
+{
+  "delivery": [
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+Telegram target:
+- `{ "type": "telegram" }`
+
+Webhook target:
+- `{ "type": "webhook", "url": "https://your-app.example/webhook" }`
+
+Both can coexist in the same signal:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+Webhook deliveries use the normal Iruka alert payload and appear in signal history the same way other delivery attempts do.
+
+## Metadata
+
+Current metadata fields:
+
+```json
+{
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": {
+      "mode": "cooldown"
+    }
+  }
+}
+```
+
+Supported repeat policies:
+
+- `cooldown`
+- `post_first_alert_snooze`
+- `until_resolved`
+
+## Signal responses
+
+`POST /api/v1/signals`, `GET /api/v1/signals`, `GET /api/v1/signals/:id`, `PATCH /api/v1/signals/:id`, and `PATCH /api/v1/signals/:id/toggle` all use the same saved-signal response shape.
+
+Example:
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "version": "1",
+  "name": "High transfer count",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
+  "definition": {
+    "window": { "duration": "1h" },
+    "conditions": []
+  },
+  "delivery": [
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ],
+  "metadata": {
+    "description": "Optional",
+    "repeat_policy": { "mode": "cooldown" }
+  },
+  "complexity_score": 13,
+  "is_active": true,
+  "created_at": "2026-04-23T00:00:00.000Z",
+  "updated_at": "2026-04-23T00:00:00.000Z",
+  "last_evaluated_at": null,
+  "last_fired_at": null
+}
+```
+
+`complexity_score` is always included in saved-signal responses.
+Today it is derived from existing signal fields only:
+
+- interval schedule contribution: `ceil(3600 / interval_seconds)`
+- provider-work contribution: `work_units_per_evaluation`
+- current state reads cost 1 work unit
+- historical state `change` conditions cost 2 work units
+- raw-event / HyperSync checks cost 2 work units
+- inactive or external-only signals return `0`
+
+Read **Usage Limits** for the plan model, worked examples, and the $10/month Pro target budget.
+
+## Plan and usage limits
+
+### `GET /api/v1/me/limits`
+
+Returns the authenticated user's plan and active complexity usage.
+
+```json
+{
+  "plan": { "key": "free", "name": "Free" },
+  "active_complexity": { "used": 24, "limit": 25 },
+  "minimum_schedule_interval_seconds": 300,
+  "complexity_formula": {
+    "version": "provider_work_v1",
+    "docs_url": "https://docs.iruka.tech/product/usage-limits"
+  }
+}
+```
+
+## Active complexity budget errors
+
+When create, update, or toggle-on would exceed the authenticated user's active complexity budget, the API returns `400` with a structured payload like:
+
+```json
+{
+  "error": "Active complexity budget exceeded",
+  "code": "active_complexity_budget_exceeded",
+  "projected_complexity": 48,
+  "tier_maximum": 25,
+  "current_complexity": 24,
+  "plan": { "key": "free", "name": "Free" },
+  "signal_complexity": 24,
+  "docs_url": "https://docs.iruka.tech/product/usage-limits",
+  "minimum_schedule_interval_seconds": 300
+}
+```
+
+- `projected_complexity` = what the user's active total would become after the requested change
+- `tier_maximum` = the current allowed budget for that user's tier
+- `current_complexity` = current active total when available
+- `signal_complexity` = active complexity contribution for the requested signal
+- `plan` and `docs_url` let the app explain the limit without parsing strings
+
+## List and fetch signals
+
+### `GET /api/v1/signals`
+
+Query parameter:
+
+- `active=true` — return only active signals
+
+### `GET /api/v1/signals/:id`
+
+Returns one signal for the authenticated owner.
+
+## Update, toggle, and delete
+
+### `PATCH /api/v1/signals/:id`
+
+Supports partial updates for fields such as:
+
+- `name`
+- `triggers`
+- `definition`
+- `delivery`
+- `metadata`
+- `is_active`
+
+### `PATCH /api/v1/signals/:id/toggle`
+
+Use this for a simple active/inactive toggle.
+
+### `DELETE /api/v1/signals/:id`
+
+Deletes the signal for the authenticated owner.
+
+## Signal history
+
+### `GET /api/v1/signals/:id/history`
+
+Use history to inspect evaluations, notification attempts, matched conditions, and delivery failures for one authenticated user's signal.
+
+Query parameters:
+
+| Param | Default | Purpose |
+| --- | --- | --- |
+| `limit` | `100` | Page size for each returned list. Capped at `500`. |
+| `offset` | `0` | Shared default offset for evaluations and notifications. Capped at `100000`. |
+| `evaluation_offset` | `offset` | Offset for the evaluation timeline. Use this when paging evaluations independently. |
+| `notification_offset` | `offset` | Offset for the notification timeline. Use this when paging notifications independently. |
+| `include_notifications` | `true` | Set to `false` to omit notification records. |
+| `triggered` | unset | Filter evaluations by triggered state: `true` or `false`. |
+| `conclusive` | unset | Filter evaluations by conclusive state: `true` or `false`. |
+| `notification_success` | unset | Filter notifications by delivery success: `true` for 2xx/3xx webhook status, `false` for failed or missing status. |
+
+Evaluations and notifications are independent timelines. If you need stable pagination across both lists, prefer `evaluation_offset` and `notification_offset` instead of a shared `offset`.
+
+The response includes:
+
+- `evaluations` — evaluation history, including `condition_results`, `conditions_met`, `logic`, any synthesized execution `scope`, and `wake_context`
+- `notifications` — notification history, unless `include_notifications=false`
+- `count` — number of rows returned in this page
+- `pagination` — `limit`, current `offset`, and `next_offset` for evaluations and notifications
+
+Example response shape:
+
+```json
+{
+  "signal_id": "550e8400-e29b-41d4-a716-446655440000",
+  "evaluations": [],
+  "notifications": [],
+  "count": {
+    "evaluations": 0,
+    "notifications": 0
+  },
+  "pagination": {
+    "evaluations": {
+      "limit": 100,
+      "offset": 0,
+      "next_offset": null
+    },
+    "notifications": {
+      "limit": 100,
+      "offset": 0,
+      "next_offset": null
+    }
+  }
+}
+```
+
+This is useful for explainability and debugging integrations without direct database access.
+
+For group results:
+
+- legacy address groups return `matchedAddresses`
+- generic tracked-value groups return `matchedTargets`
+
+## External trigger execution
+
+### `POST /api/v1/signals/:id/trigger`
+
+This route belongs to the `external` trigger type.
+It is **not a live public integration path yet**.
+Do not build against it yet.
+
+When this ships, it is expected to wake a signal that includes an `external` trigger entry.
+Until then, use scheduled signals in real integrations.
+
+## Simulation
+
+### `POST /api/v1/simulate/:id/simulate`
+
+Use this to simulate a saved signal over a time range.
+
+### `POST /api/v1/simulate/:id/first-trigger`
+
+Use this to find the first point where the signal would have matched.
+
+These endpoints are useful for:
+
+- backtesting
+- signal tuning
+- verifying whether a rule is too noisy before enabling it
+
+## Response and error behavior
+
+Common response patterns:
+
+- `400` for schema or validation failures
+- `401` for missing or invalid auth
+- `404` when a signal is not found for the authenticated owner
+- `409` when a signal requires source capabilities that are not enabled
+- `500` for unexpected server errors
+
+## What to read next
+
+- Read **Definition** for the query part of the signal
+- Read **Examples** for condition examples
+- Read **Signal** for the top-level signal shape
+- Read **Telegram Delivery** if you want managed operator notifications
+
+---
+
+# External Triggers
+
+Source: `reference/external-triggers.md`
+
+Canonical URL: https://docs.iruka.tech/reference/external-triggers
+
+> [!NOTE]
+> This page describes a **target-schema trigger type**, not a live public integration flow.
+> The signal schema already reserves `{"type":"external"}`.
+> Public external input is **not enabled yet**.
+
+## What this means today
+
+You can design around `external` as part of the target signal model.
+
+```json
+{
+  "type": "external"
+}
+```
+
+That tells readers and integrators that Iruka intends to support a signal which is woken by an authenticated upstream system instead of a schedule.
+
+## What is not live yet
+
+The public docs do **not** currently promise:
+
+- a live `POST /api/v1/signals/:id/trigger` flow
+- a stable trigger payload contract
+- production-ready external event ingestion
+
+Until that ships, use scheduled signals in real integrations.
+
+## Why keep it in the schema docs
+
+Because it changes how the signal model is understood:
+
+- `triggers` is an array because a signal can have more than one wake-up path
+- not every trigger is a scheduler
+- delivery stays separate from triggering
+
+## What to read next
+
+- Read **Signal** for the top-level signal shape
+- Read **Definition** for the query structure
+- Read **API Reference** for currently available routes
+
+---
+
+# Webhook Delivery
+
+Source: `integrations/webhook-delivery.md`
+
+Canonical URL: https://docs.iruka.tech/integrations/webhook-delivery
+
+Iruka can deliver alerts directly to your own HTTPS endpoint.
+
+Use this when you want alerts to land in your backend, queue, bot, workflow engine, or incident system.
+
+## When to use webhook delivery
+
+Choose webhook delivery when:
+
+- your own app should receive the alert payload
+- you want machine-readable delivery instead of a chat message
+- you want to feed alerts into your own automations
+
+## How it works
+
+1. you create a signal with a webhook delivery target
+2. Iruka evaluates the signal
+3. when the rule matches, Iruka POSTs the alert payload to your configured URL
+4. the attempt is recorded in signal history
+
+## Delivery target shape
+
+Use this inside `delivery[]`:
+
+```json
+{
+  "type": "webhook",
+  "url": "https://antonmyown.dev/webhook/iruka"
+}
+```
+
+Optional retry policy:
+
+```json
+{
+  "type": "webhook",
+  "url": "https://antonmyown.dev/webhook/iruka",
+  "retry_policy": {
+    "max_retries": 2
+  }
+}
+```
+
+## Coexisting with Telegram
+
+One signal can deliver to both Telegram and a webhook:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    {
+      "type": "webhook",
+      "url": "https://antonmyown.dev/webhook/iruka"
+    }
+  ]
+}
+```
+
+That means the same trigger can reach a human chat and your own system.
+
+## Example signal
+
+```json
+{
+  "version": "1",
+  "name": "USDC whale webhook",
+  "triggers": [
+    {
+      "type": "schedule",
+      "schedule": {
+        "kind": "interval",
+        "interval_seconds": 300
+      }
+    }
+  ],
+  "definition": {
+    "window": { "duration": "1h" },
+    "conditions": [
+      {
+        "type": "threshold",
+        "source": { "kind": "alias", "name": "ERC20.Position.balance" },
+        "chain_id": 1,
+        "token": "0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "account": "0x1111111111111111111111111111111111111111",
+        "operator": ">",
+        "value": "1000000000"
+      }
+    ]
+  },
+  "delivery": [
+    {
+      "type": "webhook",
+      "url": "https://antonmyown.dev/webhook/iruka"
+    }
+  ],
+  "metadata": {
+    "repeat_policy": { "mode": "cooldown" }
+  }
+}
+```
+
+## What Iruka sends
+
+Iruka sends the normal alert payload for a triggered signal.
+
+At a high level, expect fields like:
+
+- `signal_id`
+- `signal_name`
+- `triggered_at`
+- `summary`
+- `scope` (synthesized from the signal's explicit condition targeting)
+- `conditions_met`
+- `wake_context`
+- `context`
+
+The exact shape follows the current backend alert payload used for signal delivery.
+
+## Notes
+
+- use a public HTTPS URL that your system controls
+- webhook delivery is configured per signal, not as a global account setting
+- webhook attempts are recorded in signal history
+
+## What to read next
+
+- Read **API Reference** for create, update, and history routes
+- Read **Telegram Delivery** if you also want chat delivery
+
+---
+
+# Telegram Delivery
+
+Source: `integrations/telegram-delivery.md`
+
+Canonical URL: https://docs.iruka.tech/integrations/telegram-delivery
+
+Iruka can deliver alerts directly to Telegram through a managed delivery adapter.
+
+Use this when you want operator-facing notifications without building your own messaging bridge.
+
+## When to use Telegram delivery
+
+Choose managed Telegram delivery when:
+
+- humans need to receive alerts directly
+- you want a simple first-party notification path
+- you want Telegram-specific actions such as `Why` and snooze
+
+## How it works
+
+1. a user connects their Telegram account to Iruka
+2. you create a signal with `delivery: [{ "type": "telegram" }]`
+3. Iruka evaluates the signal
+4. when the rule matches, Iruka routes the alert through the delivery adapter
+5. the delivery adapter sends the Telegram message to the linked chat
+
+## Creating a Telegram-delivered signal
+
+Use this at signal creation time:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" }
+  ]
+}
+```
+
+If you also want your own backend to receive the same alert, add a webhook target alongside Telegram:
+
+```json
+{
+  "delivery": [
+    { "type": "telegram" },
+    { "type": "webhook", "url": "https://antonmyown.dev/webhook/iruka" }
+  ]
+}
+```
+
+Telegram delivery and webhook delivery are independent targets in the same fan-out list.
+
+## Link status and linking endpoints
+
+Iruka exposes two integration endpoints for the current authenticated user:
+
+- `GET /api/v1/me/integrations/telegram`
+- `POST /api/v1/me/integrations/telegram/link`
+
+Today, Telegram linking still depends on the current account-link flow behind those endpoints.
+API-first bot linking is planned, but not live yet.
+
+## Repeat policy vs Telegram snooze
+
+These are separate concepts.
+
+### Repeat policy
+
+Controlled on the signal through `metadata.repeat_policy`:
+
+- `cooldown`
+- `post_first_alert_snooze`
+- `until_resolved`
+
+### Telegram snooze
+
+Applied by the Telegram adapter for a specific signal/chat pair.
+
+In practice:
+
+- repeat policy controls when Iruka should attempt another notification
+- Telegram snooze controls whether Telegram output should be suppressed temporarily
+
+## Security
+
+Iruka signs delivery webhooks using `X-Iruka-Signature`.
+
+The delivery adapter verifies:
+
+- timestamped HMAC format
+- shared webhook secret
+
+This keeps the bridge trusted even when the delivery process is separate from the core API.
+
+## What to read next
+
+- Read **API Reference** for signal creation and history routes
+- Read **Webhook Delivery** if you want Iruka to POST alerts into your own system
+
+---
+
+# Moved
+
+Source: `product/create-a-signal.md`
+
+Canonical URL: https://docs.iruka.tech/product/create-a-signal
+
+This content moved to **Signal**.
+
+Read **Signal** for the top-level signal shape.
+Then read **Definition** and **Examples**.

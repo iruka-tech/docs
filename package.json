@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:dev": "node scripts/generate-llms.mjs && vitepress dev docs",
+    "docs:build": "node scripts/generate-llms.mjs && vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "llms:generate": "node scripts/generate-llms.mjs"
   },
   "devDependencies": {
     "vitepress": "^1.6.4",
